@@ -9,7 +9,15 @@ git clone https://github.com/Romain-Chevrollier/minijira.git
 cd minijira
 ```
 
-Le dépôt ne contient pas encore de code applicatif : il n'y a donc pas encore de commande pour lancer l'application, les tests ou le lint. Cette section sera complétée au fur et à mesure.
+Le backend utilise [uv](https://docs.astral.sh/uv/getting-started/installation/), à installer au préalable. Il installe aussi Python 3.12 si besoin.
+
+```bash
+cd backend
+uv sync                                # installer les dépendances
+uv run uvicorn app.main:app --reload   # lancer l'app sur http://127.0.0.1:8000
+uv run pytest                          # lancer les tests
+uv run ruff check .                    # lancer le lint
+```
 
 ## Le parcours d'une contribution
 
