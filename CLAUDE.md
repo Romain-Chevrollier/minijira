@@ -15,4 +15,8 @@ Explique brièvement tes choix techniques et les commandes que tu lances.
 - Toute nouvelle fonctionnalité est accompagnée de tests.
 
 ## Commandes
-(à compléter quand le projet aura du code : lancer l'app, les tests, le lint)
+À lancer depuis `backend/` :
+- Installer les dépendances : `uv sync`
+- Lancer l'app : `uv run uvicorn app.main:app --reload`
+- Lancer les tests : `uv run pytest`
+- Lancer le lint : `uv run ruff check .`
