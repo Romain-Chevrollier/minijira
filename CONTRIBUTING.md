@@ -38,7 +38,7 @@ uv run ruff check .                    # lancer le lint
    git push -u origin feat/12-creation-ticket
    ```
 
-6. **Ouvrir une pull request** vers `main`, avec `Closes #<n°>` dans sa description pour la lier à son issue.
+6. **Ouvrir une pull request** vers `main`, avec `Closes #<n°>` dans sa description pour la lier à son issue. La CI y lance automatiquement le lint et les tests.
 
 ## Nommer les branches
 
