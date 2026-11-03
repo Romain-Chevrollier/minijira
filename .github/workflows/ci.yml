@@ -12,6 +12,25 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: minijira
+          POSTGRES_PASSWORD: minijira
+          POSTGRES_DB: minijira
+        ports:
+          - 5432:5432
+        # GitHub attend que le service soit "healthy" avant de lancer les steps
+        options: >-
+          --health-cmd "pg_isready -U minijira -d minijira"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # En CI la base est jetable : app et tests partagent la même
+      DATABASE_URL: postgresql+psycopg://minijira:minijira@localhost:5432/minijira
+      TEST_DATABASE_URL: postgresql+psycopg://minijira:minijira@localhost:5432/minijira
     defaults:
       run:
         working-directory: backend
@@ -22,4 +41,5 @@ jobs:
           python-version: "3.12"
       - run: uv sync --locked
       - run: uv run ruff check .
+      - run: uv run alembic upgrade head
       - run: uv run pytest
