@@ -107,3 +107,29 @@ def test_assignee_over_100_characters_returns_422(client):
     response = create_ticket(client, assignee="a" * 101)
 
     assert response.status_code == 422
+
+
+def test_get_ticket_returns_200_and_ticket(client):
+    created = create_ticket(
+        client,
+        description="Le bouton ne répond pas",
+        priority="high",
+        assignee="Alice",
+    ).json()
+
+    response = client.get(f"/tickets/{created['id']}")
+
+    assert response.status_code == 200
+    assert response.json() == created
+
+
+def test_get_unknown_ticket_returns_404(client):
+    response = client.get("/tickets/999999")
+
+    assert response.status_code == 404
+
+
+def test_get_ticket_with_non_integer_id_returns_422(client):
+    response = client.get("/tickets/abc")
+
+    assert response.status_code == 422
