@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -24,4 +24,12 @@ def create_ticket(
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
+    return ticket
+
+
+@app.get("/tickets/{ticket_id}", response_model=TicketRead)
+def get_ticket(ticket_id: int, db: Annotated[Session, Depends(get_db)]) -> Ticket:
+    ticket = db.get(Ticket, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket introuvable")
     return ticket
