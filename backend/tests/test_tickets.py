@@ -133,3 +133,34 @@ def test_get_ticket_with_non_integer_id_returns_422(client):
     response = client.get("/tickets/abc")
 
     assert response.status_code == 422
+
+
+def test_list_tickets_empty_returns_empty_list(client):
+    response = client.get("/tickets")
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_tickets_returns_all_tickets(client):
+    first = create_ticket(client, title="Premier").json()
+    second = create_ticket(
+        client, title="Second", description="Détails", assignee="Bob"
+    ).json()
+
+    response = client.get("/tickets")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 2
+    # Mêmes champs que la création (donc que GET /tickets/{id})
+    assert second in body
+    assert first in body
+
+
+def test_list_tickets_sorted_by_id_desc(client):
+    ids = [create_ticket(client).json()["id"] for _ in range(3)]
+
+    response = client.get("/tickets")
+
+    assert [ticket["id"] for ticket in response.json()] == sorted(ids, reverse=True)
