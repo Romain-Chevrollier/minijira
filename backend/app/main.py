@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -25,6 +26,12 @@ def create_ticket(
     db.commit()
     db.refresh(ticket)
     return ticket
+
+
+@app.get("/tickets", response_model=list[TicketRead])
+def list_tickets(db: Annotated[Session, Depends(get_db)]) -> list[Ticket]:
+    # Du plus récent au plus ancien : l'id est croissant, donc pas d'ex-aequo
+    return list(db.scalars(select(Ticket).order_by(Ticket.id.desc())))
 
 
 @app.get("/tickets/{ticket_id}", response_model=TicketRead)
