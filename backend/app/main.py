@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Ticket, TicketStatus
-from app.schemas import TicketCreate, TicketRead
+from app.schemas import TicketCreate, TicketRead, TicketUpdate
 
 app = FastAPI(title="MiniJira")
 
@@ -39,4 +39,19 @@ def get_ticket(ticket_id: int, db: Annotated[Session, Depends(get_db)]) -> Ticke
     ticket = db.get(Ticket, ticket_id)
     if ticket is None:
         raise HTTPException(status_code=404, detail="Ticket introuvable")
+    return ticket
+
+
+@app.patch("/tickets/{ticket_id}", response_model=TicketRead)
+def update_ticket(
+    ticket_id: int, payload: TicketUpdate, db: Annotated[Session, Depends(get_db)]
+) -> Ticket:
+    ticket = db.get(Ticket, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket introuvable")
+    # exclude_unset : seuls les champs envoyés (null compris) sont appliqués
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(ticket, field, value)
+    db.commit()
+    db.refresh(ticket)
     return ticket
