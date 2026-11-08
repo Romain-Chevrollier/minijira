@@ -164,3 +164,150 @@ def test_list_tickets_sorted_by_id_desc(client):
     response = client.get("/tickets")
 
     assert [ticket["id"] for ticket in response.json()] == sorted(ids, reverse=True)
+
+
+def update_ticket(client, ticket_id, **fields):
+    return client.patch(f"/tickets/{ticket_id}", json=fields)
+
+
+def test_update_ticket_returns_200_and_updated_ticket(client):
+    created = create_ticket(client).json()
+
+    response = update_ticket(
+        client,
+        created["id"],
+        title="Nouveau titre",
+        description="Nouvelle description",
+        priority="high",
+        assignee="Bob",
+        status="in_progress",
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["title"] == "Nouveau titre"
+    assert body["description"] == "Nouvelle description"
+    assert body["priority"] == "high"
+    assert body["assignee"] == "Bob"
+    assert body["status"] == "in_progress"
+
+
+def test_update_ticket_is_saved_in_database(client, db_session):
+    created = create_ticket(client).json()
+
+    update_ticket(client, created["id"], title="Nouveau titre", status="done")
+
+    ticket = db_session.get(Ticket, created["id"])
+    db_session.refresh(ticket)  # relit la ligne en base plutôt que le cache
+    assert ticket.title == "Nouveau titre"
+    assert ticket.status == "done"
+
+
+def test_update_ticket_keeps_fields_not_sent(client):
+    created = create_ticket(
+        client, description="Détails", priority="low", assignee="Alice"
+    ).json()
+
+    response = update_ticket(client, created["id"], priority="high")
+
+    assert response.json() == {**created, "priority": "high"}
+
+
+STATUSES = ["todo", "in_progress", "done"]
+
+
+@pytest.mark.parametrize("start", STATUSES)
+@pytest.mark.parametrize("target", STATUSES)
+def test_any_status_change_is_allowed(client, start, target):
+    ticket_id = create_ticket(client).json()["id"]
+    update_ticket(client, ticket_id, status=start)
+
+    response = update_ticket(client, ticket_id, status=target)
+
+    assert response.status_code == 200
+    assert response.json()["status"] == target
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"status": "blocked"},
+        {"priority": "urgent"},
+        {"title": ""},
+        {"title": "   "},
+        {"title": "a" * 201},
+        {"assignee": "a" * 101},
+    ],
+)
+def test_update_with_invalid_value_returns_422(client, fields):
+    ticket_id = create_ticket(client).json()["id"]
+
+    response = update_ticket(client, ticket_id, **fields)
+
+    assert response.status_code == 422
+
+
+def test_update_title_is_stripped(client):
+    ticket_id = create_ticket(client).json()["id"]
+
+    response = update_ticket(client, ticket_id, title="  Nouveau titre  ")
+
+    assert response.json()["title"] == "Nouveau titre"
+
+
+@pytest.mark.parametrize("field", ["title", "priority", "status"])
+def test_update_required_field_to_null_returns_422(client, field):
+    ticket_id = create_ticket(client).json()["id"]
+
+    response = update_ticket(client, ticket_id, **{field: None})
+
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize("field", ["description", "assignee"])
+def test_update_optional_field_to_null_clears_it(client, field):
+    ticket_id = create_ticket(client, description="Détails", assignee="Alice").json()[
+        "id"
+    ]
+
+    response = update_ticket(client, ticket_id, **{field: None})
+
+    assert response.status_code == 200
+    assert response.json()[field] is None
+
+
+@pytest.mark.parametrize("body", [{}, {"id": 42, "created_at": "2020-01-01T00:00:00Z"}])
+def test_update_without_editable_field_returns_422(client, body):
+    ticket_id = create_ticket(client).json()["id"]
+
+    response = client.patch(f"/tickets/{ticket_id}", json=body)
+
+    assert response.status_code == 422
+
+
+def test_update_ignores_id_and_created_at(client):
+    created = create_ticket(client).json()
+
+    response = update_ticket(
+        client,
+        created["id"],
+        title="Nouveau titre",
+        id=42,
+        created_at="2020-01-01T00:00:00Z",
+    )
+
+    body = response.json()
+    assert body["id"] == created["id"]
+    assert body["created_at"] == created["created_at"]
+
+
+def test_update_unknown_ticket_returns_404(client):
+    response = update_ticket(client, 999999, title="Nouveau titre")
+
+    assert response.status_code == 404
+
+
+def test_update_ticket_with_non_integer_id_returns_422(client):
+    response = update_ticket(client, "abc", title="Nouveau titre")
+
+    assert response.status_code == 422
