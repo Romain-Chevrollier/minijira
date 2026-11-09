@@ -311,3 +311,42 @@ def test_update_ticket_with_non_integer_id_returns_422(client):
     response = update_ticket(client, "abc", title="Nouveau titre")
 
     assert response.status_code == 422
+
+
+def test_delete_ticket_returns_204_without_content(client):
+    ticket_id = create_ticket(client).json()["id"]
+
+    response = client.delete(f"/tickets/{ticket_id}")
+
+    assert response.status_code == 204
+    assert response.content == b""
+
+
+def test_deleted_ticket_is_removed_from_database(client, db_session):
+    ticket_id = create_ticket(client).json()["id"]
+
+    client.delete(f"/tickets/{ticket_id}")
+
+    assert db_session.get(Ticket, ticket_id) is None
+    assert client.get(f"/tickets/{ticket_id}").status_code == 404
+
+
+def test_delete_unknown_ticket_returns_404(client):
+    response = client.delete("/tickets/999999")
+
+    assert response.status_code == 404
+
+
+def test_delete_ticket_twice_returns_404(client):
+    ticket_id = create_ticket(client).json()["id"]
+    client.delete(f"/tickets/{ticket_id}")
+
+    response = client.delete(f"/tickets/{ticket_id}")
+
+    assert response.status_code == 404
+
+
+def test_delete_ticket_with_non_integer_id_returns_422(client):
+    response = client.delete("/tickets/abc")
+
+    assert response.status_code == 422
