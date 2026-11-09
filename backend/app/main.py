@@ -55,3 +55,13 @@ def update_ticket(
     db.commit()
     db.refresh(ticket)
     return ticket
+
+
+@app.delete("/tickets/{ticket_id}", status_code=204)
+def delete_ticket(ticket_id: int, db: Annotated[Session, Depends(get_db)]) -> None:
+    ticket = db.get(Ticket, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket introuvable")
+    # Suppression définitive : pas de corbeille ni de suppression logique
+    db.delete(ticket)
+    db.commit()
