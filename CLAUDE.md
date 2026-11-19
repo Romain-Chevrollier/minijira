@@ -27,3 +27,10 @@ Explique brièvement tes choix techniques et les commandes que tu lances.
 - Lancer l'app : `uv run uvicorn app.main:app --reload`
 - Lancer les tests (PostgreSQL démarré) : `uv run pytest`
 - Lancer le lint : `uv run ruff check .`
+
+À lancer depuis `frontend/` (Node 22) :
+- Installer les dépendances : `npm install`
+- Lancer le front : `npm run dev` (http://localhost:5173, `/api/...` relayé vers le backend sur le port 8000)
+- Lancer les tests : `npm test`
+- Lancer le lint : `npm run lint`
+- Vérifier les types et construire : `npm run build`

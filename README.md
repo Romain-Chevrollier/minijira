@@ -5,8 +5,8 @@ un workflow d'équipe (issues, branches, pull requests, CI, code review).
 
 ## Stack prévue
 - Backend : FastAPI, PostgreSQL, SQLAlchemy, Alembic
-- Frontend : React (Vite)
-- Outillage : Docker Compose, pytest, ruff, GitHub Actions
+- Frontend : React, TypeScript, Vite
+- Outillage : Docker Compose, pytest, ruff, Vitest, oxlint, GitHub Actions
 
 ## Lancer le backend
 
@@ -67,5 +67,28 @@ uv run alembic upgrade head
 
 Relisez toujours le fichier généré dans `backend/migrations/versions/` avant de l'appliquer.
 
+## Lancer le frontend
+
+Prérequis : [Node.js](https://nodejs.org/) 22 (version indiquée dans `frontend/.nvmrc`), avec npm.
+
+```bash
+cd frontend
+npm install                            # installer les dépendances
+npm run dev                            # lancer le front sur http://localhost:5173
+```
+
+Le front appelle l'API sous le préfixe `/api`. En développement, Vite relaie ces appels vers le backend
+(`http://127.0.0.1:8000`) en retirant le préfixe : `/api/health` arrive sur `/health`.
+Le backend doit donc être lancé à côté. Pour vérifier, ouvrez http://localhost:5173/api/health :
+la réponse attendue est `{"status":"ok"}`.
+
+### Tests, lint et build
+
+```bash
+npm test                               # lancer les tests (Vitest)
+npm run lint                           # lancer le lint (oxlint, échoue aussi sur les avertissements)
+npm run build                          # vérifier les types TypeScript et construire le front dans dist/
+```
+
 ## Statut
-🚧 En cours — Sprint 1
+🚧 En cours — Sprint 2
