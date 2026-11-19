@@ -19,6 +19,8 @@
   --warning-text: #7d4e00;
   --danger-bg: #ffebe9;
   --danger-text: #a40e26;
+  --danger-solid: #cf222e;
+  --danger-solid-hover: #a40e26;
 
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -49,6 +51,8 @@
     --warning-text: #f2cc60;
     --danger-bg: #4c0d17;
     --danger-text: #ffa198;
+    --danger-solid: #da3633;
+    --danger-solid-hover: #f85149;
   }
 }
 
@@ -104,14 +108,36 @@ p {
   background: var(--button-hover);
 }
 
+/* Actions qui ne se rattrapent pas (suppression) */
+.button-secondary-danger {
+  color: var(--danger-text);
+}
+
+.button-danger {
+  padding: 6px 16px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--danger-solid);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.button-danger:hover:not(:disabled) {
+  background: var(--danger-solid-hover);
+}
+
 .button-primary:disabled,
-.button-secondary:disabled {
+.button-secondary:disabled,
+.button-danger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 .button-primary:focus-visible,
-.button-secondary:focus-visible {
+.button-secondary:focus-visible,
+.button-danger:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
