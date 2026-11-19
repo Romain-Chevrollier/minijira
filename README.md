@@ -10,32 +10,41 @@ un workflow d'équipe (issues, branches, pull requests, CI, code review).
 
 ## Lancer le backend
 
-Prérequis :
-- [uv](https://docs.astral.sh/uv/getting-started/installation/). Il installe aussi Python 3.12 si besoin.
-- [Docker](https://docs.docker.com/get-docker/) avec Docker Compose, pour PostgreSQL.
+Deux façons de lancer le backend, au choix :
+- **avec Docker** : la base et l'API tournent dans des conteneurs, il n'y a rien d'autre à installer ;
+- **avec uv** : seule la base tourne dans Docker, l'API tourne sur la machine avec rechargement automatique
+  à chaque modification du code. Pratique pour développer le backend.
 
-### 1. Démarrer la base de données
+Prérequis : [Docker](https://docs.docker.com/get-docker/) avec Docker Compose dans les deux cas,
+et [uv](https://docs.astral.sh/uv/getting-started/installation/) pour la deuxième façon (il installe aussi Python 3.12 si besoin).
+
+Dans les deux cas, pour vérifier que l'app répond, ouvrez http://127.0.0.1:8000/health :
+la réponse attendue est `{"status":"ok"}`.
+
+### Avec Docker
 
 Depuis la racine du dépôt :
 
 ```bash
-docker compose up -d     # démarrer PostgreSQL 17 en arrière-plan
-docker compose ps        # le service db doit être "healthy"
+docker compose up -d --build   # construire l'image du backend, puis démarrer la base et l'API
+docker compose ps              # db doit être "healthy" et backend "running"
+docker compose logs backend    # voir les logs de l'API (migrations, requêtes)
 ```
 
-Le conteneur contient deux bases : `minijira` pour le développement et `minijira_test` pour les tests.
-Les données sont conservées dans un volume Docker entre deux redémarrages.
+Les migrations sont appliquées automatiquement au démarrage de l'API. Après une modification du code du
+backend, relancez `docker compose up -d --build` pour reconstruire l'image.
+
+### Avec uv
+
+**1. Démarrer la base seule**, depuis la racine du dépôt :
 
 ```bash
-docker compose down      # arrêter PostgreSQL (les données sont conservées)
-docker compose down -v   # arrêter PostgreSQL et supprimer toutes les données
+docker compose up -d db        # démarrer uniquement PostgreSQL 17
 ```
 
-> La base `minijira_test` est créée par `docker/postgres/init/01-create-test-db.sql`, qui ne s'exécute
-> qu'au premier démarrage, quand le volume est vide. Si elle manque, lancez `docker compose down -v`
-> puis `docker compose up -d`.
+Si le conteneur `backend` tourne déjà, arrêtez-le pour libérer le port 8000 : `docker compose stop backend`.
 
-### 2. Configurer, migrer et lancer l'app
+**2. Configurer, migrer et lancer l'app :**
 
 ```bash
 cd backend
@@ -45,7 +54,19 @@ uv run alembic upgrade head            # appliquer les migrations sur la base de
 uv run uvicorn app.main:app --reload   # lancer l'app sur http://127.0.0.1:8000
 ```
 
-Pour vérifier que l'app répond, ouvrez http://127.0.0.1:8000/health : la réponse attendue est `{"status":"ok"}`.
+### La base de données
+
+Le conteneur `db` contient deux bases : `minijira` pour le développement et `minijira_test` pour les tests.
+Les données sont conservées dans un volume Docker entre deux redémarrages.
+
+```bash
+docker compose down      # arrêter les conteneurs (les données sont conservées)
+docker compose down -v   # arrêter les conteneurs et supprimer toutes les données
+```
+
+> La base `minijira_test` est créée par `docker/postgres/init/01-create-test-db.sql`, qui ne s'exécute
+> qu'au premier démarrage, quand le volume est vide. Si elle manque, lancez `docker compose down -v`
+> puis `docker compose up -d`.
 
 ### 3. Tests et lint
 
