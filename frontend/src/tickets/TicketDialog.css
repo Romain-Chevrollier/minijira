@@ -113,6 +113,26 @@ body:has(.ticket-dialog[open]) {
   font-style: italic;
 }
 
+/* « Modifier » à gauche, « Supprimer » à droite */
+.details-actions .button-secondary-danger {
+  margin-left: auto;
+}
+
+.delete-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--danger-text);
+  border-radius: 8px;
+  background: var(--danger-bg);
+}
+
+.ticket-details .delete-confirm p {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .ticket-dialog-error {
   display: flex;
   align-items: center;

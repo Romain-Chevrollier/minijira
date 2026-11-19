@@ -5,7 +5,7 @@ import { jsonResponse } from './render'
 
 /**
  * Faux serveur pour les tests : remplace fetch et garde les tickets en mémoire.
- * Répond à GET/POST /api/tickets et GET/PATCH /api/tickets/:id, comme l'API.
+ * Répond à GET/POST /api/tickets et GET/PATCH/DELETE /api/tickets/:id, comme l'API.
  */
 export function mockServer(initialTickets: Ticket[] = []) {
   let tickets = initialTickets.map((ticket) => ({ ...ticket }))
@@ -34,6 +34,10 @@ export function mockServer(initialTickets: Ticket[] = []) {
     if (!ticket) {
       return jsonResponse({ detail: 'Ticket introuvable' }, 404)
     }
+    if (method === 'DELETE') {
+      tickets = tickets.filter((t) => t.id !== ticket.id)
+      return new Response(null, { status: 204 })
+    }
     if (method === 'PATCH') {
       Object.assign(ticket, JSON.parse(String(init?.body)) as TicketUpdate)
     }
@@ -44,6 +48,11 @@ export function mockServer(initialTickets: Ticket[] = []) {
 
   return {
     fetchMock,
+    /** Adresses appelées avec cette méthode (DELETE...). */
+    urlsCalled: (wanted: string) =>
+      fetchMock.mock.calls
+        .filter(([, init]) => (init?.method ?? 'GET') === wanted)
+        .map(([input]) => String(input)),
     /** Corps JSON des requêtes envoyées avec cette méthode (POST, PATCH...). */
     bodiesSent: (wanted: string) =>
       fetchMock.mock.calls

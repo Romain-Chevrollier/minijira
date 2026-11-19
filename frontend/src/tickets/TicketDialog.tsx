@@ -104,7 +104,13 @@ export function TicketDialog() {
     body = <TicketEditForm ticket={query.data} onDone={() => setIsEditing(false)} />
   } else {
     heading = query.data.title
-    body = <TicketDetails ticket={query.data} onEdit={() => setIsEditing(true)} />
+    body = (
+      <TicketDetails
+        ticket={query.data}
+        onEdit={() => setIsEditing(true)}
+        onDeleted={close}
+      />
+    )
   }
 
   return (

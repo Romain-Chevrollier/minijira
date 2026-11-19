@@ -77,3 +77,11 @@ export async function updateTicket(
   })
   return readJson<Ticket>(response, 'à la modification du ticket')
 }
+
+/** Supprime définitivement un ticket. L'API ne renvoie aucun contenu (204). */
+export async function deleteTicket(id: number): Promise<void> {
+  const response = await fetch(`/api/tickets/${id}`, { method: 'DELETE' })
+  if (!response.ok) {
+    throw new ApiError(response.status, `Erreur ${response.status} à la suppression du ticket`)
+  }
+}

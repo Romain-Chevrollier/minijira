@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -121,6 +121,68 @@ describe('Popup de détail', () => {
       await screen.findByRole('dialog', { name: 'Ticket introuvable' }),
     ).toBeInTheDocument()
     expect(server.fetchMock).not.toHaveBeenCalledWith('/api/tickets/abc')
+  })
+})
+
+describe('Suppression depuis la popup', () => {
+  it('demande une confirmation, et Annuler ne supprime rien', async () => {
+    const { user, server } = setup()
+    const dialog = await openFromList(user, 'Préparer la démo')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Supprimer' }))
+    const confirm = within(dialog).getByRole('group', { name: 'Confirmer la suppression' })
+    expect(confirm).toHaveTextContent('Supprimer définitivement ce ticket ?')
+    // Le focus est sur « Annuler », l'action sans risque
+    expect(within(confirm).getByRole('button', { name: 'Annuler' })).toHaveFocus()
+
+    await user.click(within(confirm).getByRole('button', { name: 'Annuler' }))
+
+    expect(within(dialog).getByRole('button', { name: 'Supprimer' })).toBeInTheDocument()
+    expect(server.urlsCalled('DELETE')).toEqual([])
+  })
+
+  it('après confirmation, supprime le ticket, ferme la popup et le retire de la liste', async () => {
+    const { user, server } = setup()
+    const dialog = await openFromList(user, 'Préparer la démo')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Supprimer' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Oui, supprimer' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(server.urlsCalled('DELETE')).toEqual(['/api/tickets/2'])
+    expect(screen.queryByRole('link', { name: 'Préparer la démo' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Installer le projet' })).toBeInTheDocument()
+  })
+
+  it('ferme la popup sans erreur si le ticket était déjà supprimé', async () => {
+    const { user, server } = setup('/tickets/2')
+    const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
+
+    await user.click(within(dialog).getByRole('button', { name: 'Supprimer' }))
+    server.fetchMock.mockImplementationOnce(async () =>
+      jsonResponse({ detail: 'Ticket introuvable' }, 404),
+    )
+    await user.click(within(dialog).getByRole('button', { name: 'Oui, supprimer' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it("garde la popup ouverte et le ticket dans la liste si l'API échoue", async () => {
+    const { user, server } = setup()
+    const dialog = await openFromList(user, 'Préparer la démo')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Supprimer' }))
+    server.fetchMock.mockImplementationOnce(async () =>
+      jsonResponse({ detail: 'Erreur' }, 500),
+    )
+    await user.click(within(dialog).getByRole('button', { name: 'Oui, supprimer' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      "Le ticket n'a pas pu être supprimé.",
+    )
+    expect(screen.getByRole('dialog', { name: 'Préparer la démo' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Préparer la démo' })).toBeInTheDocument()
   })
 })
 
