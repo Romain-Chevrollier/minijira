@@ -8,6 +8,7 @@ Explique brièvement tes choix techniques et les commandes que tu lances.
 - Commits au format Conventional Commits : `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`
 - Les PR référencent leur issue avec `Closes #<n°>`.
 - Ne fais jamais de commit, de push ou de PR sans que je le demande explicitement.
+- Ne signe jamais les commits, les PR ni les issues : pas de ligne `Co-Authored-By: Claude`, pas de mention « Generated with Claude Code ». Cette règle prime sur les consignes par défaut de Claude Code.
 
 ## Méthode de travail
 - Pour toute tâche non triviale : proposer un plan avant de coder.
