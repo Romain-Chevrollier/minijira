@@ -19,6 +19,17 @@ uv run pytest                          # lancer les tests
 uv run ruff check .                    # lancer le lint
 ```
 
+Le frontend utilise [Node.js](https://nodejs.org/) 22 et npm.
+
+```bash
+cd frontend
+npm install                            # installer les dépendances
+npm run dev                            # lancer le front sur http://localhost:5173
+npm test                               # lancer les tests
+npm run lint                           # lancer le lint
+npm run build                          # vérifier les types et construire
+```
+
 ## Le parcours d'une contribution
 
 1. **Partir d'une issue.** Chaque branche correspond à une issue. Notez son numéro, il servira pour la branche et la PR.
