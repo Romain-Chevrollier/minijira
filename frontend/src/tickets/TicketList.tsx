@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router'
 
 import { fetchTickets } from '../api/tickets'
 import { formatDate, PRIORITY_LABELS, STATUS_LABELS } from './labels'
@@ -51,7 +52,12 @@ export function TicketList() {
       <tbody>
         {tickets.map((ticket) => (
           <tr key={ticket.id}>
-            <td>{ticket.title}</td>
+            <td>
+              {/* fromList : la popup saura revenir en arrière en se fermant */}
+              <Link to={`/tickets/${ticket.id}`} state={{ fromList: true }}>
+                {ticket.title}
+              </Link>
+            </td>
             <td>
               <span className={`badge badge-status-${ticket.status}`}>
                 {STATUS_LABELS[ticket.status]}

@@ -21,6 +21,9 @@ export interface TicketCreate {
   assignee: string | null
 }
 
+/** Champs à modifier (TicketUpdate) : seuls les champs présents sont changés. */
+export type TicketUpdate = Partial<TicketCreate & { status: TicketStatus }>
+
 /** Erreur renvoyée quand l'API répond avec un code d'échec (4xx, 5xx). */
 export class ApiError extends Error {
   readonly status: number
@@ -32,16 +35,24 @@ export class ApiError extends Error {
   }
 }
 
+/** Lit la réponse JSON, ou lève une ApiError si l'API a répondu par un échec. */
+async function readJson<T>(response: Response, action: string): Promise<T> {
+  if (!response.ok) {
+    throw new ApiError(response.status, `Erreur ${response.status} ${action}`)
+  }
+  return (await response.json()) as T
+}
+
 /** Liste des tickets, du plus récent au plus ancien (tri fait par l'API). */
 export async function fetchTickets(): Promise<Ticket[]> {
   const response = await fetch('/api/tickets')
-  if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      `Erreur ${response.status} au chargement des tickets`,
-    )
-  }
-  return (await response.json()) as Ticket[]
+  return readJson<Ticket[]>(response, 'au chargement des tickets')
+}
+
+/** Un ticket par son identifiant. ApiError 404 s'il n'existe pas. */
+export async function fetchTicket(id: number): Promise<Ticket> {
+  const response = await fetch(`/api/tickets/${id}`)
+  return readJson<Ticket>(response, 'au chargement du ticket')
 }
 
 /** Crée un ticket et renvoie le ticket enregistré. */
@@ -51,11 +62,18 @@ export async function createTicket(payload: TicketCreate): Promise<Ticket> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
-  if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      `Erreur ${response.status} à la création du ticket`,
-    )
-  }
-  return (await response.json()) as Ticket
+  return readJson<Ticket>(response, 'à la création du ticket')
+}
+
+/** Modifie les champs envoyés d'un ticket et renvoie le ticket à jour. */
+export async function updateTicket(
+  id: number,
+  changes: TicketUpdate,
+): Promise<Ticket> {
+  const response = await fetch(`/api/tickets/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  })
+  return readJson<Ticket>(response, 'à la modification du ticket')
 }
