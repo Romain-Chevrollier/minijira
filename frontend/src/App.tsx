@@ -1,8 +1,10 @@
 function App() {
+  // Erreur volontaire pour tester la CI : un nombre n'est pas un texte
+  const titre: string = 42
   return (
     <main>
       <h1>MiniJira</h1>
-      <p>Tes tickets s'afficheront ici.</p>
+      <p>{titre}</p>
     </main>
   )
 }
