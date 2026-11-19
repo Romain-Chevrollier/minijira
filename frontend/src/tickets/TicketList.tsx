@@ -21,7 +21,12 @@ export function TicketList() {
     return (
       <div role="alert" className="ticket-list-error">
         <p>Impossible de charger les tickets.</p>
-        <button type="button" onClick={() => refetch()} disabled={isFetching}>
+        <button
+          type="button"
+          className="button-secondary"
+          onClick={() => refetch()}
+          disabled={isFetching}
+        >
           Réessayer
         </button>
       </div>
