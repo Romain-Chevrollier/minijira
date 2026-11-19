@@ -17,5 +17,16 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: ./backend
+    environment:
+      # Entre conteneurs, la base s'appelle "db" (le nom du service), pas localhost
+      DATABASE_URL: postgresql+psycopg://minijira:minijira@db:5432/minijira
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:

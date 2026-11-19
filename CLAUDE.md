@@ -17,8 +17,10 @@ Explique brièvement tes choix techniques et les commandes que tu lances.
 
 ## Commandes
 À lancer depuis la racine du dépôt :
-- Démarrer PostgreSQL : `docker compose up -d`
-- Arrêter PostgreSQL : `docker compose down` (`-v` pour supprimer les données)
+- Démarrer la base et le backend (migrations appliquées au démarrage) : `docker compose up -d --build`
+- Démarrer uniquement PostgreSQL : `docker compose up -d db`
+- Voir les logs du backend : `docker compose logs backend`
+- Arrêter les conteneurs : `docker compose down` (`-v` pour supprimer les données)
 
 À lancer depuis `backend/` :
 - Créer la config locale (une fois) : `cp .env.example .env`
