@@ -1,15 +1,26 @@
-import type { TicketCreate, TicketPriority } from '../api/tickets'
+import type {
+  Ticket,
+  TicketCreate,
+  TicketPriority,
+  TicketStatus,
+  TicketUpdate,
+} from '../api/tickets'
 
 // Mêmes limites que l'API (backend/app/schemas.py)
 export const TITLE_MAX_LENGTH = 200
 export const ASSIGNEE_MAX_LENGTH = 100
 
-/** Valeurs saisies dans le formulaire, telles que tapées par l'utilisateur. */
+/** Valeurs saisies dans le formulaire de création, telles que tapées par l'utilisateur. */
 export interface TicketFormValues {
   title: string
   description: string
   priority: TicketPriority
   assignee: string
+}
+
+/** Valeurs du formulaire de modification : les mêmes, plus le statut. */
+export interface TicketEditValues extends TicketFormValues {
+  status: TicketStatus
 }
 
 export type TicketFormErrors = Partial<Record<'title' | 'assignee', string>>
@@ -38,6 +49,10 @@ export function validateTicketForm(values: TicketFormValues): TicketFormErrors {
   return errors
 }
 
+export function hasErrors(errors: TicketFormErrors): boolean {
+  return Object.values(errors).some(Boolean)
+}
+
 /** Prépare les données pour l'API : espaces retirés, champ facultatif vide -> null. */
 export function toTicketCreate(values: TicketFormValues): TicketCreate {
   return {
@@ -46,4 +61,28 @@ export function toTicketCreate(values: TicketFormValues): TicketCreate {
     priority: values.priority,
     assignee: values.assignee.trim() || null,
   }
+}
+
+/** Pré-remplit le formulaire de modification avec un ticket existant. */
+export function ticketToEditValues(ticket: Ticket): TicketEditValues {
+  return {
+    title: ticket.title,
+    description: ticket.description ?? '',
+    priority: ticket.priority,
+    assignee: ticket.assignee ?? '',
+    status: ticket.status,
+  }
+}
+
+/** Ne garde que les champs réellement modifiés, nettoyés comme à la création. */
+export function toTicketUpdate(ticket: Ticket, values: TicketEditValues): TicketUpdate {
+  const next = { ...toTicketCreate(values), status: values.status }
+  const changes: TicketUpdate = {}
+
+  if (next.title !== ticket.title) changes.title = next.title
+  if (next.description !== ticket.description) changes.description = next.description
+  if (next.priority !== ticket.priority) changes.priority = next.priority
+  if (next.assignee !== ticket.assignee) changes.assignee = next.assignee
+  if (next.status !== ticket.status) changes.status = next.status
+  return changes
 }
