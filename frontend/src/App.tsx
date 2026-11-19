@@ -1,8 +1,10 @@
+import { TicketList } from './tickets/TicketList'
+
 function App() {
   return (
     <main>
       <h1>MiniJira</h1>
-      <p>Tes tickets s'afficheront ici.</p>
+      <TicketList />
     </main>
   )
 }

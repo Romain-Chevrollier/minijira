@@ -1,0 +1,71 @@
+.ticket-list {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ticket-list th,
+.ticket-list td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.ticket-list th {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ticket-list td:first-child {
+  width: 100%;
+}
+
+.ticket-list td:not(:first-child) {
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Statut */
+.badge-status-todo {
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+}
+.badge-status-in_progress {
+  background: var(--info-bg);
+  color: var(--info-text);
+}
+.badge-status-done {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+/* Priorité */
+.badge-priority-low {
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+}
+.badge-priority-medium {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+.badge-priority-high {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.ticket-list-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ticket-list-error p {
+  color: var(--danger-text);
+}
