@@ -3,10 +3,37 @@
 Application de gestion de tickets inspirée de Jira, développée pour pratiquer
 un workflow d'équipe (issues, branches, pull requests, CI, code review).
 
-## Stack prévue
+## Lancer MiniJira
+
+Seul prérequis : [Docker](https://docs.docker.com/get-docker/) avec Docker Compose (Docker Desktop sous Windows et macOS).
+
+Depuis la racine du dépôt :
+
+```bash
+docker compose up -d --build   # construire et démarrer la base, l'API et l'interface
+```
+
+Puis ouvrez **http://localhost**. La commande rend la main une fois les images construites ;
+`docker compose ps` doit afficher les trois services `healthy` au bout de quelques secondes.
+
+- **Arrêter** : `docker compose stop` (ou `docker compose down` pour supprimer aussi les conteneurs).
+  Les tickets sont conservés dans un volume Docker.
+- **Redémarrage automatique** : tant que vous ne l'avez pas arrêté, MiniJira se relance tout seul au
+  démarrage de Docker Desktop, par exemple après un redémarrage de l'ordinateur.
+- **Mettre à jour** après un `git pull` : relancez `docker compose up -d --build`.
+- **Changer de port** si le port 80 est déjà utilisé : créez un fichier `.env` à la racine du dépôt
+  contenant `MINIJIRA_PORT=8080`, relancez `docker compose up -d`, puis ouvrez http://localhost:8080.
+- **Supprimer toutes les données** : `docker compose down -v`.
+
+L'API reste accessible directement sur http://localhost:8000, avec sa documentation interactive sur
+http://localhost:8000/docs.
+
+## Stack
 - Backend : FastAPI, PostgreSQL, SQLAlchemy, Alembic
-- Frontend : React, TypeScript, Vite
+- Frontend : React, TypeScript, Vite, servi par nginx dans Docker
 - Outillage : Docker Compose, pytest, ruff, Vitest, oxlint, GitHub Actions
+
+Les sections suivantes servent à développer MiniJira.
 
 ## Lancer le backend
 
@@ -26,13 +53,13 @@ la réponse attendue est `{"status":"ok"}`.
 Depuis la racine du dépôt :
 
 ```bash
-docker compose up -d --build   # construire l'image du backend, puis démarrer la base et l'API
-docker compose ps              # db doit être "healthy" et backend "running"
-docker compose logs backend    # voir les logs de l'API (migrations, requêtes)
+docker compose up -d --build backend   # construire l'image du backend, puis démarrer la base et l'API
+docker compose ps                      # db et backend doivent être "healthy"
+docker compose logs backend            # voir les logs de l'API (migrations, requêtes)
 ```
 
 Les migrations sont appliquées automatiquement au démarrage de l'API. Après une modification du code du
-backend, relancez `docker compose up -d --build` pour reconstruire l'image.
+backend, relancez `docker compose up -d --build backend` pour reconstruire l'image.
 
 ### Avec uv
 

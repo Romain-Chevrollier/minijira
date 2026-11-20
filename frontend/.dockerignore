@@ -1,0 +1,6 @@
+# Fichiers locaux à ne pas copier dans l'image Docker
+node_modules/
+dist/
+.env
+.env.*
+*.log
