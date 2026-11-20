@@ -63,3 +63,24 @@ jobs:
       - run: npm test
       # Le build vérifie aussi les types TypeScript
       - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      # Le lancement en une commande : construit les images, démarre tout
+      # et attend que chaque service soit prêt (healthy)
+      - run: docker compose up -d --build --wait
+      - name: Vérifier l'application à travers nginx
+        run: |
+          curl --fail --silent http://localhost/ | grep -q '<div id="root">'
+          curl --fail --silent http://localhost/api/health | grep -q '"status":"ok"'
+          curl --fail --silent http://localhost/api/tickets | grep -q '^\['
+          # Une adresse de l'application (popup d'un ticket) renvoie bien la page
+          curl --fail --silent http://localhost/tickets/1 | grep -q '<div id="root">'
+      - name: Afficher les logs en cas d'échec
+        if: failure()
+        run: docker compose logs
+      - name: Arrêter et supprimer les conteneurs
+        if: always()
+        run: docker compose down -v

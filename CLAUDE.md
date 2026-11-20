@@ -17,9 +17,11 @@ Explique brièvement tes choix techniques et les commandes que tu lances.
 
 ## Commandes
 À lancer depuis la racine du dépôt :
-- Démarrer la base et le backend (migrations appliquées au démarrage) : `docker compose up -d --build`
+- Lancer toute l'application (http://localhost, migrations appliquées au démarrage) : `docker compose up -d --build`
+- Démarrer uniquement la base et le backend : `docker compose up -d --build backend`
 - Démarrer uniquement PostgreSQL : `docker compose up -d db`
-- Voir les logs du backend : `docker compose logs backend`
+- Voir les logs d'un service : `docker compose logs backend` (ou `frontend`, `db`)
+- Port de l'application : 80 par défaut, `MINIJIRA_PORT=8080` dans un `.env` à la racine pour le changer
 - Arrêter les conteneurs : `docker compose down` (`-v` pour supprimer les données)
 
 À lancer depuis `backend/` :

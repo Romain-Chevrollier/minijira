@@ -16,6 +16,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    # Relancé avec Docker Desktop (après un redémarrage du PC), sauf si on l'a arrêté
+    restart: unless-stopped
 
   backend:
     build: ./backend
@@ -27,6 +29,33 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      # L'API est prête quand /health répond (Python est déjà dans l'image)
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      # Port d'accès : 80 par défaut (http://localhost), modifiable avec MINIJIRA_PORT
+      - "${MINIJIRA_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   pgdata:
