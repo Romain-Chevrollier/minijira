@@ -53,8 +53,9 @@ export function TicketList() {
         {tickets.map((ticket) => (
           <tr key={ticket.id}>
             <td>
-              {/* fromList : la popup saura revenir en arrière en se fermant */}
-              <Link to={`/tickets/${ticket.id}`} state={{ fromList: true }}>
+              {/* Adresse relative à la vue : /liste/tickets/12.
+                  fromView : la popup saura revenir en arrière en se fermant */}
+              <Link to={`tickets/${ticket.id}`} state={{ fromView: true }}>
                 {ticket.title}
               </Link>
             </td>
