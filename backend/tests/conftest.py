@@ -7,12 +7,19 @@ import app.models  # noqa: F401 (enregistre les modèles dans Base.metadata)
 from app.config import settings
 from app.db import Base, get_db
 from app.main import app
+from tests.db_guard import check_test_database_url
 
 
 @pytest.fixture(scope="session")
 def db_engine():
     if settings.test_database_url is None:
         pytest.fail("TEST_DATABASE_URL n'est pas définie (voir backend/.env.example)")
+
+    # Sécurité : arrête tous les tests avant de toucher à une base qui n'est pas *_test
+    try:
+        check_test_database_url(settings.test_database_url)
+    except ValueError as error:
+        pytest.exit(str(error), returncode=1)
 
     # Échoue vite si PostgreSQL n'est pas démarré, au lieu de rester bloqué
     engine = create_engine(

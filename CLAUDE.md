@@ -20,6 +20,9 @@ Explique brièvement tes choix techniques et les commandes que tu lances.
 - Lancer toute l'application (http://localhost, migrations appliquées au démarrage) : `docker compose up -d --build`
 - Démarrer uniquement la base et le backend : `docker compose up -d --build backend`
 - Démarrer uniquement PostgreSQL : `docker compose up -d db`
+- Lancer les tests du backend dans Docker (base `minijira_test`) : `docker compose run --rm backend-tests`
+- Lancer le lint du backend dans Docker : `docker compose run --rm backend-tests ruff check .`
+- Reconstruire l'image de test après un changement de dépendances : `docker compose --profile test build backend-tests`
 - Voir les logs d'un service : `docker compose logs backend` (ou `frontend`, `db`)
 - Port de l'application : 80 par défaut, `MINIJIRA_PORT=8080` dans un `.env` à la racine pour le changer
 - Arrêter les conteneurs : `docker compose down` (`-v` pour supprimer les données)
