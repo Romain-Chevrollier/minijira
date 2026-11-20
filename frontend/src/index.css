@@ -6,6 +6,7 @@
   --accent: #0969da;
   --accent-hover: #0757b8;
   --accent-text: #ffffff;
+  --link: #0969da;
   --button-bg: #f6f8fa;
   --button-hover: #eaeef2;
 
@@ -38,6 +39,8 @@
     --accent: #1f6feb;
     --accent-hover: #388bfd;
     --accent-text: #ffffff;
+    /* Plus clair que --accent : lisible sur le fond sombre */
+    --link: #4493f8;
     --button-bg: #212830;
     --button-hover: #2a313c;
 
@@ -68,6 +71,11 @@ main {
 
 p {
   color: var(--text-muted);
+}
+
+/* Liens dans le texte (les onglets et la liste ont leur propre style) */
+a {
+  color: var(--link);
 }
 
 .page-header {

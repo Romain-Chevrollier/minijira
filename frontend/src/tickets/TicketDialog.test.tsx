@@ -27,7 +27,7 @@ const bareTicket: Ticket = {
   created_at: '2026-11-02T12:00:00Z',
 }
 
-function setup(route = '/') {
+function setup(route = '/liste') {
   const user = userEvent.setup()
   const server = mockServer([fullTicket, bareTicket])
   renderWithQueryClient(<App />, { route })
@@ -56,7 +56,7 @@ describe('Popup de détail', () => {
   })
 
   it('signale les champs vides', async () => {
-    setup('/tickets/1')
+    setup('/liste/tickets/1')
 
     const dialog = await screen.findByRole('dialog', { name: 'Installer le projet' })
 
@@ -74,8 +74,8 @@ describe('Popup de détail', () => {
     expect(screen.getByRole('table', { name: 'Tickets' })).toBeInTheDocument()
   })
 
-  it('ouverte directement par son adresse, elle se ferme sur la liste', async () => {
-    const { user } = setup('/tickets/2')
+  it('ouverte directement par son adresse, elle se ferme sur la liste (sa vue)', async () => {
+    const { user } = setup('/liste/tickets/2')
     const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
 
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
@@ -107,7 +107,7 @@ describe('Popup de détail', () => {
   })
 
   it('affiche « Ticket introuvable » pour un ticket qui n’existe pas', async () => {
-    setup('/tickets/99')
+    setup('/liste/tickets/99')
 
     expect(
       await screen.findByRole('dialog', { name: 'Ticket introuvable' }),
@@ -115,7 +115,7 @@ describe('Popup de détail', () => {
   })
 
   it('affiche « Ticket introuvable » pour une adresse invalide, sans appeler l’API', async () => {
-    const { server } = setup('/tickets/abc')
+    const { server } = setup('/liste/tickets/abc')
 
     expect(
       await screen.findByRole('dialog', { name: 'Ticket introuvable' }),
@@ -155,7 +155,7 @@ describe('Suppression depuis la popup', () => {
   })
 
   it('ferme la popup sans erreur si le ticket était déjà supprimé', async () => {
-    const { user, server } = setup('/tickets/2')
+    const { user, server } = setup('/liste/tickets/2')
     const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
 
     await user.click(within(dialog).getByRole('button', { name: 'Supprimer' }))
@@ -211,7 +211,7 @@ describe('Modification depuis la popup', () => {
   })
 
   it('envoie null quand on vide la description', async () => {
-    const { user, server } = setup('/tickets/2')
+    const { user, server } = setup('/liste/tickets/2')
     const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
 
     await user.click(within(dialog).getByRole('button', { name: 'Modifier' }))
@@ -225,7 +225,7 @@ describe('Modification depuis la popup', () => {
   })
 
   it("n'appelle pas l'API si rien n'a changé", async () => {
-    const { user, server } = setup('/tickets/2')
+    const { user, server } = setup('/liste/tickets/2')
     const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
 
     await user.click(within(dialog).getByRole('button', { name: 'Modifier' }))
@@ -236,7 +236,7 @@ describe('Modification depuis la popup', () => {
   })
 
   it("refuse un titre vide sans appeler l'API", async () => {
-    const { user, server } = setup('/tickets/2')
+    const { user, server } = setup('/liste/tickets/2')
     const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
 
     await user.click(within(dialog).getByRole('button', { name: 'Modifier' }))
@@ -248,7 +248,7 @@ describe('Modification depuis la popup', () => {
   })
 
   it("garde la saisie et affiche un message si l'API refuse la modification", async () => {
-    const { user, server } = setup('/tickets/2')
+    const { user, server } = setup('/liste/tickets/2')
     const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
     await user.click(within(dialog).getByRole('button', { name: 'Modifier' }))
     await user.type(within(dialog).getByLabelText('Assigné'), ' et Romain')
@@ -264,7 +264,7 @@ describe('Modification depuis la popup', () => {
   })
 
   it('Annuler abandonne les changements', async () => {
-    const { user, server } = setup('/tickets/2')
+    const { user, server } = setup('/liste/tickets/2')
     const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
 
     await user.click(within(dialog).getByRole('button', { name: 'Modifier' }))
@@ -276,7 +276,7 @@ describe('Modification depuis la popup', () => {
   })
 
   it('un clic à côté ne ferme pas la popup pendant une modification', async () => {
-    const { user } = setup('/tickets/2')
+    const { user } = setup('/liste/tickets/2')
     const dialog = await screen.findByRole('dialog', { name: 'Préparer la démo' })
 
     await user.click(within(dialog).getByRole('button', { name: 'Modifier' }))

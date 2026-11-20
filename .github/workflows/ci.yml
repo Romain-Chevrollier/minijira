@@ -77,8 +77,10 @@ jobs:
           curl --fail --silent http://localhost/ | grep -q '<div id="root">'
           curl --fail --silent http://localhost/api/health | grep -q '"status":"ok"'
           curl --fail --silent http://localhost/api/tickets | grep -q '^\['
-          # Une adresse de l'application (popup d'un ticket) renvoie bien la page
+          # Les adresses de l'application (vues et popups) renvoient bien la page
           curl --fail --silent http://localhost/tickets/1 | grep -q '<div id="root">'
+          curl --fail --silent http://localhost/liste | grep -q '<div id="root">'
+          curl --fail --silent http://localhost/liste/tickets/1 | grep -q '<div id="root">'
       # Les tests du backend tels qu'on les lance en local, dans leur conteneur
       - name: Lancer les tests du backend dans Docker
         run: docker compose run --rm backend-tests

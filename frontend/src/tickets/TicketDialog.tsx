@@ -16,7 +16,8 @@ function parseTicketId(value: string | undefined): number | null {
 }
 
 /**
- * Popup de détail d'un ticket, affichée par-dessus la liste à l'adresse /tickets/:ticketId.
+ * Popup de détail d'un ticket, affichée par-dessus la vue en cours :
+ * /tickets/:ticketId sur le board, /liste/tickets/:ticketId sur la liste.
  * Elle se ferme avec ✕, Échap, un clic à côté (hors modification) ou « Précédent ».
  */
 export function TicketDialog() {
@@ -42,12 +43,13 @@ export function TicketDialog() {
   }, [])
 
   function close() {
-    // Ouverte depuis la liste : on revient en arrière, comme le bouton « Précédent ».
-    // Ouverte directement par son adresse : on va sur la liste.
-    if ((location.state as { fromList?: boolean } | null)?.fromList) {
+    // Ouverte depuis une vue : on revient en arrière, comme le bouton « Précédent ».
+    // Ouverte directement par son adresse : on remonte d'un niveau, vers la vue
+    // derrière la popup (/tickets/12 -> /, /liste/tickets/12 -> /liste).
+    if ((location.state as { fromView?: boolean } | null)?.fromView) {
       navigate(-1)
     } else {
-      navigate('/', { replace: true })
+      navigate('..', { relative: 'route', replace: true })
     }
   }
 

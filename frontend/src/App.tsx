@@ -1,16 +1,24 @@
 import { Navigate, Route, Routes } from 'react-router'
 
+import { AppLayout } from './AppLayout'
+import { BoardPage } from './board/BoardPage'
+import { ListPage } from './tickets/ListPage'
 import { TicketDialog } from './tickets/TicketDialog'
-import { TicketsPage } from './tickets/TicketsPage'
 
 function App() {
   return (
     <Routes>
-      {/* La liste reste affichée derrière la popup de détail d'un ticket */}
-      <Route path="/" element={<TicketsPage />}>
-        <Route path="tickets/:ticketId" element={<TicketDialog />} />
+      {/* Titre, onglets et création communs aux deux vues */}
+      <Route element={<AppLayout />}>
+        {/* Chaque vue reste affichée derrière la popup de détail d'un ticket */}
+        <Route path="/" element={<BoardPage />}>
+          <Route path="tickets/:ticketId" element={<TicketDialog />} />
+        </Route>
+        <Route path="liste" element={<ListPage />}>
+          <Route path="tickets/:ticketId" element={<TicketDialog />} />
+        </Route>
       </Route>
-      {/* Adresse inconnue : retour à la liste */}
+      {/* Adresse inconnue : retour au board */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
