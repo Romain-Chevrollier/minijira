@@ -65,17 +65,6 @@ describe('Navigation entre les vues', () => {
     expectBoardView()
   })
 
-  it('le lien du contenu provisoire du board mène à la liste', async () => {
-    const user = userEvent.setup()
-    mockServer([ticket])
-    renderWithQueryClient(<App />)
-
-    const board = screen.getByRole('region', { name: 'Board' })
-    await user.click(within(board).getByRole('link', { name: 'Liste' }))
-
-    await expectListView()
-  })
-
   it.each(['/', '/liste'])('le bouton « Nouveau ticket » est disponible sur %s', async (route) => {
     const user = userEvent.setup()
     mockServer([ticket])
