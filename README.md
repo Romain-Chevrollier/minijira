@@ -95,9 +95,24 @@ docker compose down -v   # arrêter les conteneurs et supprimer toutes les donn�
 > qu'au premier démarrage, quand le volume est vide. Si elle manque, lancez `docker compose down -v`
 > puis `docker compose up -d`.
 
-### 3. Tests et lint
+### Tests et lint
 
-PostgreSQL doit être démarré : les tests se connectent à la base `minijira_test`.
+Les tests utilisent la base `minijira_test`, jamais `minijira`. Comme ils vident leur base, ils
+refusent de démarrer si le nom de la base ne se termine pas par `_test`.
+
+**Avec Docker** (rien à installer), depuis la racine du dépôt :
+
+```bash
+docker compose run --rm backend-tests                   # lancer les tests (démarre la base si besoin)
+docker compose run --rm backend-tests ruff check .      # lancer le lint
+docker compose run --rm backend-tests pytest -k create  # lancer une partie des tests
+```
+
+Le dossier `backend/` est partagé avec le conteneur : une modification du code ou des tests est prise
+en compte directement. Après un changement de dépendances (`pyproject.toml`, `uv.lock`), reconstruisez
+l'image avec `docker compose --profile test build backend-tests`.
+
+**Avec uv**, depuis `backend/`, PostgreSQL démarré :
 
 ```bash
 uv run pytest                          # lancer les tests

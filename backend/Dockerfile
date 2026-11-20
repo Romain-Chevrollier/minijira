@@ -1,5 +1,5 @@
 # Image officielle de uv : même version de uv qu'en local, avec Python 3.12
-FROM ghcr.io/astral-sh/uv:0.12.5-python3.12-trixie-slim
+FROM ghcr.io/astral-sh/uv:0.12.5-python3.12-trixie-slim AS base
 
 # Précompile le Python pour un démarrage plus rapide, sans garder de cache uv dans l'image
 ENV UV_COMPILE_BYTECODE=1 \
@@ -8,9 +8,29 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 WORKDIR /app
 
+# Les deux images (tests et app) partent des mêmes versions, lues dans uv.lock
+COPY pyproject.toml uv.lock ./
+
+
+# --- Image de test : pytest et ruff, lancée par `docker compose run --rm backend-tests`
+FROM base AS test
+
+# L'environnement Python est installé dans /venv, hors de /app : le dossier backend/
+# est partagé avec le conteneur, et le .venv de l'ordinateur ne doit pas être touché
+ENV UV_PROJECT_ENVIRONMENT=/venv \
+    PATH="/venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1
+RUN uv sync --locked --no-install-project
+
+# Le code n'est pas copié : il est partagé depuis backend/ (voir compose.yaml)
+CMD ["pytest"]
+
+
+# --- Image de l'app (dernière étape : celle construite par défaut)
+FROM base AS app
+
 # Dépendances d'abord : Docker garde cette étape en cache tant que
 # pyproject.toml et uv.lock ne changent pas. Pas d'outils de dev (pytest, ruff).
-COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
 
 # Puis le code de l'app et les migrations

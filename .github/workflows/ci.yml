@@ -18,19 +18,20 @@ jobs:
         env:
           POSTGRES_USER: minijira
           POSTGRES_PASSWORD: minijira
-          POSTGRES_DB: minijira
+          POSTGRES_DB: minijira_test
         ports:
           - 5432:5432
         # GitHub attend que le service soit "healthy" avant de lancer les steps
         options: >-
-          --health-cmd "pg_isready -U minijira -d minijira"
+          --health-cmd "pg_isready -U minijira -d minijira_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
     env:
-      # En CI la base est jetable : app et tests partagent la même
-      DATABASE_URL: postgresql+psycopg://minijira:minijira@localhost:5432/minijira
-      TEST_DATABASE_URL: postgresql+psycopg://minijira:minijira@localhost:5432/minijira
+      # En CI la base est jetable : app et tests partagent la même. Son nom finit
+      # par _test, sinon les tests refusent de démarrer (voir tests/db_guard.py)
+      DATABASE_URL: postgresql+psycopg://minijira:minijira@localhost:5432/minijira_test
+      TEST_DATABASE_URL: postgresql+psycopg://minijira:minijira@localhost:5432/minijira_test
     defaults:
       run:
         working-directory: backend
@@ -78,6 +79,9 @@ jobs:
           curl --fail --silent http://localhost/api/tickets | grep -q '^\['
           # Une adresse de l'application (popup d'un ticket) renvoie bien la page
           curl --fail --silent http://localhost/tickets/1 | grep -q '<div id="root">'
+      # Les tests du backend tels qu'on les lance en local, dans leur conteneur
+      - name: Lancer les tests du backend dans Docker
+        run: docker compose run --rm backend-tests
       - name: Afficher les logs en cas d'échec
         if: failure()
         run: docker compose logs
