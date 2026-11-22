@@ -1,4 +1,5 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { focusManager } from '@tanstack/react-query'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -180,6 +181,36 @@ describe('Glisser-déposer au clavier', () => {
     await waitFor(() => expect(server.urlsCalled('GET')).toHaveLength(2))
     expect(cardTitles('À faire')).toEqual(['Installer le projet'])
     expect(cardTitles('En cours')).toEqual(['Écrire la doc'])
+  })
+
+  it('déplacer une carte ne cache pas un rechargement en échec, même en changeant de vue', async () => {
+    const { user, server } = await setup()
+    const original = server.fetchMock.getMockImplementation()!
+    let answerPatch: (response: Response) => void = () => {}
+    // Les lectures échouent ; le PATCH attend qu'on lui réponde
+    server.fetchMock.mockImplementation((input, init) => {
+      if (init?.method === 'PATCH') return new Promise((resolve) => (answerPatch = resolve))
+      if (String(input) === '/api/tickets') return Promise.resolve(jsonResponse({}, 502))
+      return original(input, init)
+    })
+    act(() => {
+      focusManager.setFocused(false)
+      focusManager.setFocused(true)
+    })
+    await screen.findByText('Données peut-être pas à jour.')
+
+    await dragWithKeyboard(user, 'Installer le projet', '[ArrowRight]')
+    await waitFor(() => expect(cardTitles('En cours')).toContain('Installer le projet'))
+    expect(screen.getByText('Données peut-être pas à jour.')).toBeInTheDocument()
+
+    // La liste s'affiche avant que son propre rechargement ait pu échouer
+    server.fetchMock.mockImplementation(() => new Promise<Response>(() => {}))
+    const tabs = screen.getByRole('navigation', { name: 'Vues' })
+    await user.click(within(tabs).getByRole('link', { name: 'Liste' }))
+    expect(screen.getByText('Données peut-être pas à jour.')).toBeInTheDocument()
+
+    await act(async () => answerPatch(jsonResponse({ ...tickets[0], status: 'in_progress' })))
+    expect(screen.getByText('Données peut-être pas à jour.')).toBeInTheDocument()
   })
 
   it("lâcher la carte dans sa propre colonne ne change rien et n'appelle pas l'API", async () => {

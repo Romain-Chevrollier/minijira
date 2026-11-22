@@ -1,0 +1,27 @@
+.stale-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 16px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--warning-bg);
+  font-size: 0.9rem;
+}
+
+.stale-notice p {
+  margin: 0;
+  color: var(--warning-text);
+}
+
+.stale-notice button[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Dans la popup, l'espacement vient déjà du conteneur */
+.ticket-dialog .stale-notice {
+  margin-bottom: 0;
+}

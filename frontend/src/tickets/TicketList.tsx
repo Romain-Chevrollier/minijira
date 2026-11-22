@@ -2,6 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 
 import { fetchTickets } from '../api/tickets'
+import type { Ticket } from '../api/tickets'
+import { StaleDataNotice } from '../query/StaleDataNotice'
+import { useRefreshFailed } from '../query/useRefreshFailed'
 import { formatDate, PRIORITY_LABELS, STATUS_LABELS } from './labels'
 import './TicketList.css'
 
@@ -9,16 +12,18 @@ export function TicketList() {
   const {
     data: tickets,
     isPending,
-    isError,
+    isLoadingError,
     isFetching,
     refetch,
   } = useQuery({ queryKey: ['tickets'], queryFn: fetchTickets })
+  const { failed } = useRefreshFailed(['tickets'])
 
   if (isPending) {
     return <p role="status">Chargement des tickets…</p>
   }
 
-  if (isError) {
+  // Écran d'erreur seulement si les tickets n'ont jamais pu être chargés
+  if (isLoadingError) {
     return (
       <div role="alert" className="ticket-list-error">
         <p>Impossible de charger les tickets.</p>
@@ -34,10 +39,19 @@ export function TicketList() {
     )
   }
 
-  if (tickets.length === 0) {
-    return <p>Aucun ticket pour l'instant.</p>
-  }
+  return (
+    <>
+      <StaleDataNotice isStale={failed} isRetrying={isFetching} onRetry={() => void refetch()} />
+      {tickets.length === 0 ? (
+        <p>Aucun ticket pour l'instant.</p>
+      ) : (
+        <TicketTable tickets={tickets} />
+      )}
+    </>
+  )
+}
 
+function TicketTable({ tickets }: { tickets: Ticket[] }) {
   // L'API renvoie déjà les tickets du plus récent au plus ancien : on garde son ordre
   return (
     <table className="ticket-list" aria-label="Tickets">

@@ -1,9 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { MouseEvent, ReactNode, SyntheticEvent } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 
-import { ApiError, fetchTicket } from '../api/tickets'
+import { fetchTicket } from '../api/tickets'
+import { StaleDataNotice } from '../query/StaleDataNotice'
+import { useRefreshFailed } from '../query/useRefreshFailed'
 import { TicketDetails } from './TicketDetails'
 import { TicketEditForm } from './TicketEditForm'
 import './TicketDialog.css'
@@ -27,13 +29,17 @@ export function TicketDialog() {
   const location = useLocation()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
-  const [isEditing, setIsEditing] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  // Lié au numéro du ticket : la saisie ne passe jamais d'un ticket à un autre
+  const isEditing = id !== null && editingId === id
+  const queryClient = useQueryClient()
 
   const query = useQuery({
     queryKey: ['tickets', id],
     queryFn: () => fetchTicket(id as number),
     enabled: id !== null,
   })
+  const { failed, notFound } = useRefreshFailed(['tickets', id])
 
   // Ouvre la popup en mode « modal » : le reste de la page est inactif derrière
   useEffect(() => {
@@ -66,12 +72,13 @@ export function TicketDialog() {
     }
   }
 
-  const isNotFound =
-    id === null || (query.error instanceof ApiError && query.error.status === 404)
-
   let heading: string
   let body: ReactNode
-  if (isNotFound) {
+  // La modification passe en premier : aucun échec de rechargement n'efface la saisie
+  if (isEditing && query.data) {
+    heading = 'Modifier le ticket'
+    body = <TicketEditForm ticket={query.data} onDone={() => setEditingId(null)} />
+  } else if (id === null || notFound) {
     heading = 'Ticket introuvable'
     body = (
       <>
@@ -86,7 +93,7 @@ export function TicketDialog() {
   } else if (query.isPending) {
     heading = 'Ticket'
     body = <p role="status">Chargement du ticket…</p>
-  } else if (query.isError) {
+  } else if (query.isLoadingError) {
     heading = 'Ticket'
     body = (
       <div role="alert" className="ticket-dialog-error">
@@ -101,15 +108,12 @@ export function TicketDialog() {
         </button>
       </div>
     )
-  } else if (isEditing) {
-    heading = 'Modifier le ticket'
-    body = <TicketEditForm ticket={query.data} onDone={() => setIsEditing(false)} />
   } else {
     heading = query.data.title
     body = (
       <TicketDetails
         ticket={query.data}
-        onEdit={() => setIsEditing(true)}
+        onEdit={() => setEditingId(id)}
         onDeleted={close}
       />
     )
@@ -135,6 +139,19 @@ export function TicketDialog() {
             ✕
           </button>
         </header>
+        {query.data && (
+          <StaleDataNotice
+            isStale={failed && !notFound}
+            isRetrying={query.isFetching}
+            // Recharge aussi la vue derrière la popup
+            onRetry={() => void queryClient.invalidateQueries({ queryKey: ['tickets'] })}
+          />
+        )}
+        {isEditing && notFound && (
+          <p role="alert" className="form-error">
+            Ce ticket n'existe plus. Copie ton texte avant de fermer.
+          </p>
+        )}
         {body}
       </div>
     </dialog>
