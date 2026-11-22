@@ -19,6 +19,12 @@
   background: var(--button-bg);
 }
 
+/* Colonne survolée pendant un glissement */
+.board-column-over {
+  border-color: var(--accent);
+  background: var(--info-bg);
+}
+
 .board-column-header {
   display: flex;
   align-items: center;
@@ -66,6 +72,22 @@
   background: var(--bg);
   color: var(--text);
   text-decoration: none;
+  cursor: grab;
+  /* Sur écran tactile : pas de sélection de texte ni de menu du lien pendant l'appui long */
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Carte d'origine pendant qu'on la glisse : estompée */
+.ticket-card-dragging {
+  opacity: 0.4;
+}
+
+/* Copie qui suit le pointeur */
+.ticket-card-preview {
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+  cursor: grabbing;
 }
 
 .ticket-card:hover {
@@ -131,4 +153,18 @@
 
 .board-error p {
   color: var(--danger-text);
+}
+
+/* Message après un déplacement refusé par l'API */
+.board-move-error {
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border: 1px solid var(--danger-text);
+  border-radius: 6px;
+  background: var(--danger-bg);
+}
+
+.board-move-error p {
+  margin: 0;
 }
