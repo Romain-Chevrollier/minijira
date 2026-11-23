@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router'
+import { createBrowserRouter, RouterProvider } from 'react-router'
 import { ApiError } from './api/tickets'
 import './index.css'
 import App from './App.tsx'
@@ -18,12 +18,14 @@ const queryClient = new QueryClient({
   },
 })
 
+// Routeur « de données » : nécessaire pour retenir une navigation (useBlocker), par exemple
+// « Précédent » pendant une modification. Les routes restent décrites dans App.
+const router = createBrowserRouter([{ path: '*', element: <App /> }])
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>,
 )

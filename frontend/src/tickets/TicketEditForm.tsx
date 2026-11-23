@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 
 import { ApiError, updateTicket } from '../api/tickets'
 import type { Ticket, TicketUpdate } from '../api/tickets'
@@ -13,6 +13,7 @@ import {
   validateTicketForm,
 } from './ticketForm'
 import type { TicketEditValues, TicketFormErrors } from './ticketForm'
+import { useConfirmLeave } from './useConfirmLeave'
 
 interface TicketEditFormProps {
   ticket: Ticket
@@ -38,6 +39,19 @@ export function TicketEditForm({ ticket, onDone }: TicketEditFormProps) {
       onDone()
     },
   })
+
+  // Une saisie remise comme avant ne compte pas : rien ne serait perdu
+  const hasChanges = Object.keys(toTicketUpdate(initialTicket, values)).length > 0
+  const { isAsking, keepEditing, leave } = useConfirmLeave(hasChanges)
+
+  function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    // Échap pendant la question : on revient à la modification, la popup reste ouverte
+    if (isAsking && event.key === 'Escape') {
+      event.preventDefault()
+      event.stopPropagation()
+      keepEditing()
+    }
+  }
 
   function updateField(field: TicketField, value: string) {
     setValues((previous) => ({ ...previous, [field]: value }))
@@ -72,6 +86,7 @@ export function TicketEditForm({ ticket, onDone }: TicketEditFormProps) {
       className="ticket-edit-form"
       aria-label="Modifier le ticket"
       onSubmit={handleSubmit}
+      onKeyDown={handleKeyDown}
       noValidate
     >
       <TicketFormFields values={values} errors={errors} onChange={updateField} />
@@ -80,6 +95,30 @@ export function TicketEditForm({ ticket, onDone }: TicketEditFormProps) {
         <p role="alert" className="form-error">
           Le ticket n'a pas pu être modifié. {apiErrorMessage}
         </p>
+      )}
+
+      {isAsking && (
+        <div
+          className="discard-confirm"
+          role="group"
+          aria-label="Abandonner les modifications"
+        >
+          <p>Abandonner tes modifications ?</p>
+          <div className="form-actions">
+            {/* Le focus va sur « Continuer » : Entrée par réflexe ne perd rien */}
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={keepEditing}
+              autoFocus
+            >
+              Continuer la modification
+            </button>
+            <button type="button" className="button-danger" onClick={leave}>
+              Abandonner
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="form-actions">

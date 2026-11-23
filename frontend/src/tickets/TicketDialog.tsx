@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useId, useRef, useState } from 'react'
-import type { MouseEvent, ReactNode, SyntheticEvent } from 'react'
+import type { KeyboardEvent, MouseEvent, ReactNode, SyntheticEvent } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 
 import { fetchTicket } from '../api/tickets'
@@ -21,6 +21,7 @@ function parseTicketId(value: string | undefined): number | null {
  * Popup de détail d'un ticket, affichée par-dessus la vue en cours :
  * /tickets/:ticketId sur le board, /liste/tickets/:ticketId sur la liste.
  * Elle se ferme avec ✕, Échap, un clic à côté (hors modification) ou « Précédent ».
+ * Pendant une modification, le formulaire demande confirmation avant de laisser fermer.
  */
 export function TicketDialog() {
   const { ticketId } = useParams()
@@ -59,8 +60,18 @@ export function TicketDialog() {
     }
   }
 
+  function handleKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
+    // Échap est géré ici, avant le navigateur : après une ou deux fermetures refusées
+    // (confirmation), il fermerait sinon la popup de force, saisie comprise.
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      close()
+    }
+  }
+
   function handleCancel(event: SyntheticEvent<HTMLDialogElement>) {
-    // Échap : on ferme nous-mêmes, pour que l'adresse revienne aussi à la liste
+    // Autres demandes de fermeture du navigateur : on ferme nous-mêmes,
+    // pour que l'adresse revienne aussi à la liste
     event.preventDefault()
     close()
   }
@@ -124,6 +135,7 @@ export function TicketDialog() {
       ref={dialogRef}
       className="ticket-dialog"
       aria-labelledby={titleId}
+      onKeyDown={handleKeyDown}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
     >

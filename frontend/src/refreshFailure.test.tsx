@@ -183,7 +183,9 @@ describe('Rechargement réussi pendant une modification', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Modifier' }))
     await user.type(within(dialog).getByLabelText(/Titre/), ' modifié')
 
+    // Quitter le ticket demande confirmation (#56)
     await act(async () => navigate('/liste/tickets/2'))
+    await user.click(screen.getByRole('button', { name: 'Abandonner' }))
 
     expect(typedText()).not.toBeInTheDocument()
     expect(dialog).toHaveAccessibleName(otherTicket.title)
