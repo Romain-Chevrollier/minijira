@@ -98,7 +98,9 @@ docker compose down -v   # arrêter les conteneurs et supprimer toutes les donn�
 ### Tests et lint
 
 Les tests utilisent la base `minijira_test`, jamais `minijira`. Comme ils vident leur base, ils
-refusent de démarrer si le nom de la base ne se termine pas par `_test`.
+refusent de démarrer si le nom de la base ne se termine pas par `_test` : ils le vérifient dans
+`TEST_DATABASE_URL`, puis demandent à PostgreSQL quelle base est réellement ouverte, avant de
+créer ou de supprimer quoi que ce soit.
 
 **Avec Docker** (rien à installer), depuis la racine du dépôt :
 
