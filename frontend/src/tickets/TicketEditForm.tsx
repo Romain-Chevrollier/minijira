@@ -20,6 +20,9 @@ interface TicketEditFormProps {
 }
 
 export function TicketEditForm({ ticket, onDone }: TicketEditFormProps) {
+  // Photo du ticket au clic sur « Modifier » : un rechargement pendant la saisie ne la
+  // change pas, on n'envoie donc que ce que l'utilisateur a modifié lui-même.
+  const [initialTicket] = useState(ticket)
   const [values, setValues] = useState<TicketEditValues>(() =>
     ticketToEditValues(ticket),
   )
@@ -48,7 +51,7 @@ export function TicketEditForm({ ticket, onDone }: TicketEditFormProps) {
     if (hasErrors(validationErrors)) {
       return
     }
-    const changes = toTicketUpdate(ticket, values)
+    const changes = toTicketUpdate(initialTicket, values)
     // Rien n'a changé : inutile d'appeler l'API (elle refuserait une requête vide)
     if (Object.keys(changes).length === 0) {
       onDone()

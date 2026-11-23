@@ -5,6 +5,8 @@ import { useId, useState } from 'react'
 
 import { fetchTickets } from '../api/tickets'
 import type { Ticket, TicketStatus } from '../api/tickets'
+import { StaleDataNotice } from '../query/StaleDataNotice'
+import { useRefreshFailed } from '../query/useRefreshFailed'
 import { STATUS_LABELS } from '../tickets/labels'
 import { BOARD_STATUSES, groupByStatus } from './boardColumns'
 import {
@@ -24,10 +26,11 @@ export function Board() {
   const {
     data: tickets,
     isPending,
-    isError,
+    isLoadingError,
     isFetching,
     refetch,
   } = useQuery({ queryKey: ['tickets'], queryFn: fetchTickets })
+  const { failed } = useRefreshFailed(['tickets'])
   const sensors = useBoardSensors()
   const moveTicket = useMoveTicket()
   const [draggedTicket, setDraggedTicket] = useState<Ticket | null>(null)
@@ -57,7 +60,7 @@ export function Board() {
 
   // Écran d'erreur seulement si les tickets n'ont jamais pu être chargés : si un
   // rechargement échoue ensuite (backend arrêté…), le board garde ses cartes
-  if (isError && tickets === undefined) {
+  if (isLoadingError) {
     return (
       <div role="alert" className="board-error">
         <p>Impossible de charger les tickets.</p>
@@ -77,6 +80,7 @@ export function Board() {
 
   return (
     <>
+      <StaleDataNotice isStale={failed} isRetrying={isFetching} onRetry={() => void refetch()} />
       {moveError && (
         <div role="alert" className="board-error board-move-error">
           <p>{moveError}</p>
