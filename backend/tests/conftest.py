@@ -7,7 +7,7 @@ import app.models  # noqa: F401 (enregistre les modèles dans Base.metadata)
 from app.config import settings
 from app.db import Base, get_db
 from app.main import app
-from tests.db_guard import check_test_database_url
+from tests.db_guard import check_connected_database, check_test_database_url
 
 
 @pytest.fixture(scope="session")
@@ -15,7 +15,7 @@ def db_engine():
     if settings.test_database_url is None:
         pytest.fail("TEST_DATABASE_URL n'est pas définie (voir backend/.env.example)")
 
-    # Sécurité : arrête tous les tests avant de toucher à une base qui n'est pas *_test
+    # Sécurité, premier filtre : le nom de base écrit dans l'adresse
     try:
         check_test_database_url(settings.test_database_url)
     except ValueError as error:
@@ -25,6 +25,13 @@ def db_engine():
     engine = create_engine(
         settings.test_database_url, connect_args={"connect_timeout": 3}
     )
+    # Sécurité : la base réellement ouverte, avant toute création ou suppression.
+    # pytest.exit arrête tout sans exécuter le nettoyage (drop_all) plus bas.
+    try:
+        check_connected_database(engine)
+    except ValueError as error:
+        engine.dispose()
+        pytest.exit(str(error), returncode=1)
     # Crée les tables depuis les modèles (la migration est testée en CI)
     Base.metadata.create_all(engine)
     yield engine
