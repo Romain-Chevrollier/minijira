@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { MemoryRouter } from 'react-router'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 
 interface RenderOptions {
   /** Adresse de départ dans l'application, "/" par défaut. */
@@ -10,17 +10,20 @@ interface RenderOptions {
 
 /**
  * Affiche un composant avec un QueryClient neuf (sans nouvelle tentative en cas d'erreur)
- * et un routeur en mémoire qui démarre à l'adresse demandée.
+ * et un routeur en mémoire qui démarre à l'adresse demandée (le même type de routeur
+ * que l'application). `router` permet de simuler « Précédent » : router.navigate(-1).
  */
 export function renderWithQueryClient(ui: ReactElement, { route = '/' }: RenderOptions = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  return render(
-    <MemoryRouter initialEntries={[route]}>
-      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-    </MemoryRouter>,
+  const router = createMemoryRouter([{ path: '*', element: ui }], { initialEntries: [route] })
+  const result = render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
   )
+  return { ...result, router }
 }
 
 /** Fausse réponse JSON de l'API, pour simuler fetch dans les tests. */

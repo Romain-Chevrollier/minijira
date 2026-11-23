@@ -118,7 +118,8 @@ body:has(.ticket-dialog[open]) {
   margin-left: auto;
 }
 
-.delete-confirm {
+.delete-confirm,
+.discard-confirm {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -128,7 +129,9 @@ body:has(.ticket-dialog[open]) {
   background: var(--danger-bg);
 }
 
-.ticket-details .delete-confirm p {
+.ticket-details .delete-confirm p,
+.discard-confirm p {
+  margin: 0;
   color: var(--text);
   font-weight: 600;
 }
