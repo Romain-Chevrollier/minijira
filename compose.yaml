@@ -5,8 +5,12 @@ services:
       POSTGRES_USER: minijira
       POSTGRES_PASSWORD: minijira
       POSTGRES_DB: minijira
+    # Ports réservés à cet ordinateur (IPv4 et IPv6) : aucun autre appareil du réseau
+    # ne peut se connecter. Les deux adresses évitent à `localhost` un délai de
+    # 2 secondes sous Windows. Vérifié en CI par .github/scripts/check-local-ports.jq
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
+      - "[::1]:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       # Scripts exécutés une seule fois, au premier démarrage (volume vide)
@@ -25,7 +29,8 @@ services:
       # Entre conteneurs, la base s'appelle "db" (le nom du service), pas localhost
       DATABASE_URL: postgresql+psycopg://minijira:minijira@db:5432/minijira
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+      - "[::1]:8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -65,7 +70,8 @@ services:
     build: ./frontend
     ports:
       # Port d'accès : 80 par défaut (http://localhost), modifiable avec MINIJIRA_PORT
-      - "${MINIJIRA_PORT:-80}:80"
+      - "127.0.0.1:${MINIJIRA_PORT:-80}:80"
+      - "[::1]:${MINIJIRA_PORT:-80}:80"
     depends_on:
       backend:
         condition: service_healthy

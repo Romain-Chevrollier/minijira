@@ -69,9 +69,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
+      # Échoue si un port de compose.yaml est de nouveau ouvert à tout le réseau
+      - name: Vérifier que les ports sont réservés à l'ordinateur local
+        run: docker compose --profile '*' config --format json | jq -r -f .github/scripts/check-local-ports.jq
       # Le lancement en une commande : construit les images, démarre tout
       # et attend que chaque service soit prêt (healthy)
       - run: docker compose up -d --build --wait
+      - name: Vérifier qu'on se connecte en local, mais pas par l'adresse réseau
+        run: |
+          network_ip=$(hostname -I | awk '{print $1}')
+          echo "Adresse réseau de la machine : $network_ip"
+          for port in 80 8000 5432; do
+            for address in 127.0.0.1 ::1; do
+              timeout 3 bash -c "</dev/tcp/$address/$port" \
+                || { echo "::error::$address:$port ne répond pas"; exit 1; }
+            done
+            if timeout 3 bash -c "</dev/tcp/$network_ip/$port" 2>/dev/null; then
+              echo "::error::le port $port répond sur l'adresse réseau $network_ip"
+              exit 1
+            fi
+          done
+          echo "OK : 80, 8000 et 5432 répondent en local et refusent l'adresse réseau"
       - name: Vérifier l'application à travers nginx
         run: |
           curl --fail --silent http://localhost/ | grep -q '<div id="root">'
