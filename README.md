@@ -28,6 +28,10 @@ Puis ouvrez **http://localhost**. La commande rend la main une fois les images c
 L'API reste accessible directement sur http://localhost:8000, avec sa documentation interactive sur
 http://localhost:8000/docs.
 
+MiniJira est **réservé à cet ordinateur** : il n'a pas de comptes, donc ses ports (application,
+API, base de données) n'acceptent que les connexions locales. Un téléphone ou un autre appareil
+du réseau ne peut pas l'ouvrir.
+
 ## Stack
 - Backend : FastAPI, PostgreSQL, SQLAlchemy, Alembic
 - Frontend : React, TypeScript, Vite, servi par nginx dans Docker
