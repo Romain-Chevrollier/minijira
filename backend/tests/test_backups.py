@@ -162,7 +162,7 @@ def test_failed_backup_leaves_no_file(make_database, tmp_path):
 
 @pytest.fixture
 def broken_pg_dump(monkeypatch):
-    """pg_dump qui n'écrit que la moitié du fichier, puis échoue ou fait comme si de rien.
+    """pg_dump qui n'écrit que la moitié du fichier, puis échoue ou dit avoir réussi.
 
     Simule une coupure en cours de sauvegarde (disque plein, base arrêtée...).
     """
