@@ -66,6 +66,31 @@ services:
       db:
         condition: service_healthy
 
+  # Sauvegarde des tickets, à la demande : `docker compose run --rm backup`
+  # Crée backups/minijira-<date>.dump, sur l'ordinateur (survit à `down -v`)
+  backup: &backup-tool
+    # Profil "tools" : jamais démarré par `docker compose up`
+    profiles: ["tools"]
+    build:
+      context: ./backend
+      target: tools
+    entrypoint: ["python", "-m", "scripts.backups", "save"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://minijira:minijira@db:5432/minijira
+      # Date des fichiers à l'heure française (les conteneurs sont à l'heure UTC)
+      TZ: Europe/Paris
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Restauration : `docker compose run --rm restore` liste les sauvegardes,
+  # `docker compose run --rm restore backups/<fichier>` restaure après confirmation
+  restore:
+    <<: *backup-tool
+    entrypoint: ["python", "-m", "scripts.backups", "restore"]
+
   frontend:
     build: ./frontend
     ports:

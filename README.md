@@ -23,7 +23,10 @@ Puis ouvrez **http://localhost**. La commande rend la main une fois les images c
 - **Mettre à jour** après un `git pull` : relancez `docker compose up -d --build`.
 - **Changer de port** si le port 80 est déjà utilisé : créez un fichier `.env` à la racine du dépôt
   contenant `MINIJIRA_PORT=8080`, relancez `docker compose up -d`, puis ouvrez http://localhost:8080.
-- **Supprimer toutes les données** : `docker compose down -v`.
+- **Sauvegarder les tickets** : `docker compose run --rm backup` (voir
+  [Sauvegarder et restaurer](#sauvegarder-et-restaurer-les-tickets)).
+- **Supprimer toutes les données** : `docker compose down -v`. ⚠️ Cette commande efface **tous les
+  tickets**, sans retour possible : faites d'abord une sauvegarde.
 
 L'API reste accessible directement sur http://localhost:8000, avec sa documentation interactive sur
 http://localhost:8000/docs.
@@ -31,6 +34,29 @@ http://localhost:8000/docs.
 MiniJira est **réservé à cet ordinateur** : il n'a pas de comptes, donc ses ports (application,
 API, base de données) n'acceptent que les connexions locales. Un téléphone ou un autre appareil
 du réseau ne peut pas l'ouvrir.
+
+## Sauvegarder et restaurer les tickets
+
+Depuis la racine du dépôt, dans PowerShell comme dans Git Bash (rien à installer) :
+
+```bash
+docker compose run --rm backup                     # sauvegarder
+docker compose run --rm restore                    # lister les sauvegardes
+docker compose run --rm restore backups/<fichier>  # restaurer une sauvegarde
+```
+
+- **Sauvegarder** crée un fichier daté, par exemple `backups/minijira-2026-11-25-143000.dump`. Le
+  dossier `backups/` est sur votre ordinateur, ignoré par Git : il survit à `docker compose down -v`.
+  Si la sauvegarde échoue, un message l'indique et aucun fichier `.dump` n'est créé.
+- **Restaurer** remplace tous les tickets actuels par ceux du fichier choisi. Dans l'ordre :
+  1. le fichier est vérifié : un fichier invalide est refusé, sans rien modifier ;
+  2. la commande demande de taper `oui` pour confirmer ;
+  3. l'état actuel est sauvegardé (`…-avant-restauration.dump`), pour pouvoir revenir en arrière ;
+  4. le fichier est restauré en tout ou rien : en cas d'erreur, la base reste comme avant ;
+  5. les migrations manquantes sont appliquées, si la sauvegarde date d'une version plus ancienne.
+
+Ces commandes démarrent la base si besoin. Pensez à sauvegarder avant une mise à jour ou une
+manipulation risquée.
 
 ## Stack
 - Backend : FastAPI, PostgreSQL, SQLAlchemy, Alembic
@@ -92,12 +118,12 @@ Les données sont conservées dans un volume Docker entre deux redémarrages.
 
 ```bash
 docker compose down      # arrêter les conteneurs (les données sont conservées)
-docker compose down -v   # arrêter les conteneurs et supprimer toutes les données
+docker compose down -v   # ⚠️ arrêter les conteneurs et effacer TOUS les tickets
 ```
 
 > La base `minijira_test` est créée par `docker/postgres/init/01-create-test-db.sql`, qui ne s'exécute
-> qu'au premier démarrage, quand le volume est vide. Si elle manque, lancez `docker compose down -v`
-> puis `docker compose up -d`.
+> qu'au premier démarrage, quand le volume est vide. Si elle manque, créez-la sans toucher aux tickets :
+> `docker compose exec db createdb -U minijira minijira_test`.
 
 ### Tests et lint
 
@@ -124,6 +150,9 @@ l'image avec `docker compose --profile test build backend-tests`.
 uv run pytest                          # lancer les tests
 uv run ruff check .                    # lancer le lint
 ```
+
+Les tests de sauvegarde ont besoin de `pg_dump`, `pg_restore` et `psql` en version 17, présents dans
+l'image Docker de test. Sans eux, ignorez-les avec `uv run pytest -m "not pg_tools"`.
 
 ### Créer une migration
 

@@ -43,7 +43,9 @@ jobs:
       - run: uv sync --locked
       - run: uv run ruff check .
       - run: uv run alembic upgrade head
-      - run: uv run pytest
+      # Les tests de sauvegarde ont besoin de pg_dump 17 (la machine n'a que la
+      # version 16) : ils tournent dans le job docker, avec l'image de test
+      - run: uv run pytest -m "not pg_tools"
 
   frontend:
     runs-on: ubuntu-latest
@@ -102,6 +104,21 @@ jobs:
       # Les tests du backend tels qu'on les lance en local, dans leur conteneur
       - name: Lancer les tests du backend dans Docker
         run: docker compose run --rm backend-tests
+      # Le scénario de l'utilisateur, avec les vraies commandes : sauvegarde,
+      # base effacée par `down -v`, puis restauration (accents compris)
+      - name: Sauvegarder, effacer la base, puis restaurer
+        run: |
+          title='Été à Noël — ça marche ✓'
+          curl --fail --silent -X POST http://localhost/api/tickets \
+            -H 'Content-Type: application/json' \
+            -d "{\"title\": \"$title\", \"priority\": \"high\"}" > /dev/null
+          docker compose run --rm -T backup
+          backup=$(ls backups/minijira-*.dump)
+          docker compose down -v
+          docker compose up -d --wait
+          curl --fail --silent http://localhost/api/tickets | grep -q '^\[\]$'
+          echo oui | docker compose run --rm -T restore "$backup"
+          curl --fail --silent http://localhost/api/tickets | grep -q "\"title\":\"$title\""
       - name: Afficher les logs en cas d'échec
         if: failure()
         run: docker compose logs

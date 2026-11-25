@@ -14,6 +14,9 @@ dist/
 .env.*
 !.env.example
 
+# Sauvegardes des tickets (docker compose run --rm backup) : restent sur l'ordinateur
+backups/
+
 # IDE / OS
 .vscode/
 .idea/

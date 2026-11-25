@@ -25,7 +25,12 @@ Explique brièvement tes choix techniques et les commandes que tu lances.
 - Reconstruire l'image de test après un changement de dépendances : `docker compose --profile test build backend-tests`
 - Voir les logs d'un service : `docker compose logs backend` (ou `frontend`, `db`)
 - Port de l'application : 80 par défaut, `MINIJIRA_PORT=8080` dans un `.env` à la racine pour le changer
-- Arrêter les conteneurs : `docker compose down` (`-v` pour supprimer les données)
+- Sauvegarder les tickets (fichier daté dans `backups/`, ignoré par Git) : `docker compose run --rm backup`
+- Lister les sauvegardes : `docker compose run --rm restore`
+- Restaurer une sauvegarde (demande de taper `oui`, sauvegarde l'état actuel avant) : `docker compose run --rm restore backups/<fichier>`
+- Créer la base `minijira_test` si elle manque, sans perte : `docker compose exec db createdb -U minijira minijira_test`
+- Arrêter les conteneurs : `docker compose down`
+- ⚠️ `docker compose down -v` efface tous les tickets : ne jamais le proposer sans sauvegarde préalable
 
 À lancer depuis `backend/` :
 - Créer la config locale (une fois) : `cp .env.example .env`
@@ -33,7 +38,7 @@ Explique brièvement tes choix techniques et les commandes que tu lances.
 - Appliquer les migrations : `uv run alembic upgrade head`
 - Créer une migration : `uv run alembic revision --autogenerate -m "description"`
 - Lancer l'app : `uv run uvicorn app.main:app --reload`
-- Lancer les tests (PostgreSQL démarré) : `uv run pytest`
+- Lancer les tests (PostgreSQL démarré) : `uv run pytest` (`-m "not pg_tools"` sans pg_dump 17)
 - Lancer le lint : `uv run ruff check .`
 
 À lancer depuis `frontend/` (Node 22) :
