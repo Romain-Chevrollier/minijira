@@ -5,29 +5,27 @@ Docker (`docker compose run --rm backend-tests`), en local comme en CI.
 """
 
 import io
-import os
 import subprocess
-import uuid
 from datetime import datetime
 from pathlib import Path
 
 import pytest
-from alembic.config import Config
-from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.engine import make_url
+from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models import Ticket, TicketStatus
+from app.models import Project, Ticket, TicketStatus
+from app.numbering import next_ticket_number
 from scripts import backups
 from scripts.backups import (
-    BACKEND_DIR,
     BackupError,
     count_tickets,
     create_backup,
     find_backup,
     restore_backup,
 )
+from tests.databases import head_revision, run_alembic
 
 pytestmark = pytest.mark.pg_tools
 
@@ -38,51 +36,22 @@ def yes(_question):
     return True
 
 
-def alembic(url, *args):
-    result = subprocess.run(
-        ["alembic", *args],
-        cwd=BACKEND_DIR,
-        env={**os.environ, "DATABASE_URL": url},
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, result.stderr
-
-
-@pytest.fixture
-def make_database(db_engine):
-    """Crée des bases jetables (migrées par défaut), supprimées à la fin du test."""
-    admin = db_engine.execution_options(isolation_level="AUTOCOMMIT")
-    created = []
-
-    def make(migrate=True):
-        name = f"backup_{uuid.uuid4().hex[:8]}_test"
-        with admin.connect() as connection:
-            connection.execute(text(f'CREATE DATABASE "{name}"'))
-        created.append(name)
-        url = make_url(settings.test_database_url).set(database=name)
-        url_text = url.render_as_string(hide_password=False)
-        if migrate:
-            alembic(url_text, "upgrade", "head")
-        return url_text
-
-    yield make
-    with admin.connect() as connection:
-        for name in created:
-            connection.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
-
-
 def add_ticket(url, title, description=None):
+    """Ajoute un ticket au projet par défaut d'une base à jour des migrations."""
     engine = create_engine(url)
-    with engine.begin() as connection:
-        connection.execute(
-            Ticket.__table__.insert().values(
+    with Session(engine) as session:
+        project = session.scalars(select(Project).where(Project.key == "PERSO")).one()
+        session.add(
+            Ticket(
                 title=title,
                 description=description,
                 priority="high",
                 status=TicketStatus.IN_PROGRESS,
+                project=project,
+                number=next_ticket_number(session, project.key),
             )
         )
+        session.commit()
     engine.dispose()
 
 
@@ -102,12 +71,6 @@ def revision(url):
         result = value.scalar_one_or_none()
     engine.dispose()
     return result
-
-
-def head_revision():
-    config = Config(str(BACKEND_DIR / "alembic.ini"))
-    config.set_main_option("script_location", str(BACKEND_DIR / "migrations"))
-    return ScriptDirectory.from_config(config).get_current_head()
 
 
 def test_backup_is_timestamped(make_database, tmp_path):
@@ -215,7 +178,7 @@ def invalid_backup(request, make_database, tmp_path):
         path.write_bytes(complete[: len(complete) // 2])
     else:
         # Vraie sauvegarde PostgreSQL, mais pas d'une base MiniJira
-        complete = create_backup_any(make_database(migrate=False), tmp_path)
+        complete = create_backup_any(make_database(revision=None), tmp_path)
         complete.rename(path)
     for other in tmp_path.iterdir():
         if other != path:
@@ -282,8 +245,8 @@ def test_failed_restore_is_rolled_back(make_database, tmp_path, monkeypatch):
 
 def test_restores_backup_older_than_migrations(make_database, tmp_path):
     # Base sauvegardée avant la première migration : aucune table de tickets
-    old = make_database(migrate=False)
-    alembic(old, "stamp", "base")
+    old = make_database(revision=None)
+    run_alembic(old, "stamp", "base")
     backup = create_backup(old, tmp_path)
     target = make_database()
     add_ticket(target, "Remplacé")
@@ -292,6 +255,36 @@ def test_restores_backup_older_than_migrations(make_database, tmp_path):
 
     assert revision(target) == head_revision()
     assert count_tickets(target) == 0
+
+
+def test_backup_from_before_projects_is_migrated(make_database, tmp_path):
+    # Sauvegarde faite avec la version d'avant les projets (migration cad4a44e2c0c)
+    old = make_database(revision="cad4a44e2c0c")
+    engine = create_engine(old)
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO tickets (title, priority, status) VALUES "
+                "(:title, 'high', 'done'), ('Deuxième', 'low', 'todo')"
+            ),
+            {"title": ACCENTS},
+        )
+    engine.dispose()
+    backup = create_backup(old, tmp_path)
+    target = make_database()
+    add_ticket(target, "Remplacé")
+
+    restore_backup(target, backup, yes, tmp_path)
+
+    assert revision(target) == head_revision()
+    restored = tickets(target)
+    assert [(t["id"], t["number"], t["title"]) for t in restored] == [
+        (1, 1, ACCENTS),
+        (2, 2, "Deuxième"),
+    ]
+    # Le ticket suivant continue la numérotation du projet Personnel
+    add_ticket(target, "Après la restauration")
+    assert tickets(target)[-1]["number"] == 3
 
 
 @pytest.mark.parametrize(

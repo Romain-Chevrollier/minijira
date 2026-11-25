@@ -10,7 +10,7 @@ from sqlalchemy.engine import make_url
 
 from app.config import settings
 from app.db import Base
-from app.models import Ticket, TicketStatus
+from app.models import Project, Ticket, TicketStatus
 from tests.db_guard import check_connected_database, check_test_database_url
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -61,9 +61,18 @@ def decoy_url(db_engine):
     try:
         Base.metadata.create_all(decoy)
         with decoy.begin() as connection:
+            project_id = connection.execute(
+                Project.__table__.insert()
+                .values(name="Personnel", key="PERSO")
+                .returning(Project.id)
+            ).scalar_one()
             connection.execute(
                 Ticket.__table__.insert().values(
-                    title="Vrai ticket", priority="low", status=TicketStatus.TODO
+                    title="Vrai ticket",
+                    priority="low",
+                    status=TicketStatus.TODO,
+                    project_id=project_id,
+                    number=1,
                 )
             )
         yield url_text, decoy, name
