@@ -1,13 +1,21 @@
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Project, Ticket, TicketStatus
 from app.numbering import next_ticket_number
-from app.schemas import TicketCreate, TicketRead, TicketUpdate
+from app.schemas import (
+    ProjectCreate,
+    ProjectRead,
+    ProjectUpdate,
+    TicketCreate,
+    TicketRead,
+    TicketUpdate,
+)
 
 app = FastAPI(title="MiniJira")
 
@@ -29,6 +37,90 @@ def find_project(db: Session, project_id: int | None) -> Project:
     if project is None:
         raise HTTPException(status_code=422, detail=detail)
     return project
+
+
+def get_project_or_404(db: Session, project_id: int) -> Project:
+    project = db.get(Project, project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Projet introuvable")
+    return project
+
+
+def count_tickets(db: Session, project_id: int) -> int:
+    query = select(func.count()).select_from(Ticket)
+    return db.scalar(query.where(Ticket.project_id == project_id))
+
+
+def to_project_read(project: Project, ticket_count: int) -> ProjectRead:
+    return ProjectRead(
+        id=project.id,
+        key=project.key,
+        name=project.name,
+        created_at=project.created_at,
+        ticket_count=ticket_count,
+    )
+
+
+@app.get("/projects", response_model=list[ProjectRead])
+def list_projects(db: Annotated[Session, Depends(get_db)]) -> list[ProjectRead]:
+    # Une seule requête : chaque projet avec son nombre de tickets (0 si vide)
+    rows = db.execute(
+        select(Project, func.count(Ticket.id))
+        .outerjoin(Ticket, Ticket.project_id == Project.id)
+        .group_by(Project.id)
+        .order_by(Project.created_at, Project.id)
+    )
+    return [to_project_read(project, count) for project, count in rows]
+
+
+@app.post("/projects", status_code=201, response_model=ProjectRead)
+def create_project(
+    payload: ProjectCreate, db: Annotated[Session, Depends(get_db)]
+) -> ProjectRead:
+    project = Project(**payload.model_dump())
+    db.add(project)
+    try:
+        db.commit()
+    except IntegrityError:
+        # La base garantit l'unicité de la clé, même pour deux créations simultanées
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"La clé {payload.key} est déjà utilisée par un autre projet",
+        ) from None
+    db.refresh(project)
+    return to_project_read(project, ticket_count=0)
+
+
+@app.patch("/projects/{project_id}", response_model=ProjectRead)
+def update_project(
+    project_id: int, payload: ProjectUpdate, db: Annotated[Session, Depends(get_db)]
+) -> ProjectRead:
+    project = get_project_or_404(db, project_id)
+    project.name = payload.name
+    db.commit()
+    db.refresh(project)
+    return to_project_read(project, count_tickets(db, project.id))
+
+
+@app.delete("/projects/{project_id}", status_code=204)
+def delete_project(project_id: int, db: Annotated[Session, Depends(get_db)]) -> None:
+    project = get_project_or_404(db, project_id)
+    ticket_count = count_tickets(db, project.id)
+    if ticket_count > 0:
+        tickets = "ticket" if ticket_count == 1 else "tickets"
+        raise HTTPException(
+            status_code=409,
+            detail=f"Le projet {project.key} contient {ticket_count} {tickets} : "
+            "déplacez-les ou supprimez-les d'abord",
+        )
+    if db.scalar(select(func.count()).select_from(Project)) == 1:
+        raise HTTPException(
+            status_code=409, detail="Impossible de supprimer le dernier projet"
+        )
+    # Le compteur de numéros est gardé : une clé recréée reprend sa numérotation
+    db.delete(project)
+    db.commit()
 
 
 @app.post("/tickets", status_code=201, response_model=TicketRead)

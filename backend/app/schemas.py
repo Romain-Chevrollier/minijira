@@ -70,6 +70,38 @@ class TicketUpdate(BaseModel):
         return self
 
 
+ProjectName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)
+]
+# 2 à 10 caractères : une majuscule, puis des majuscules ou des chiffres (PERSO, V2)
+ProjectKey = Annotated[str, StringConstraints(pattern=r"^[A-Z][A-Z0-9]{1,9}$")]
+
+
+class ProjectCreate(BaseModel):
+    name: ProjectName
+    key: ProjectKey
+
+
+class ProjectUpdate(BaseModel):
+    # Seul le nom se modifie : la clé apparaît dans les clés des tickets (PERSO-12)
+    name: ProjectName
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_key(cls, data: object) -> object:
+        if isinstance(data, dict) and "key" in data:
+            raise ValueError("la clé d'un projet ne peut pas être modifiée")
+        return data
+
+
+class ProjectRead(BaseModel):
+    id: int
+    key: str
+    name: str
+    created_at: datetime
+    ticket_count: int
+
+
 class ProjectSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
