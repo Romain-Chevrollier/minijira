@@ -20,7 +20,9 @@ Puis ouvrez **http://localhost**. La commande rend la main une fois les images c
   Les tickets sont conservés dans un volume Docker.
 - **Redémarrage automatique** : tant que vous ne l'avez pas arrêté, MiniJira se relance tout seul au
   démarrage de Docker Desktop, par exemple après un redémarrage de l'ordinateur.
-- **Mettre à jour** après un `git pull` : relancez `docker compose up -d --build`.
+- **Mettre à jour** : faites d'abord une sauvegarde (`docker compose run --rm backup`), puis
+  `git pull` et `docker compose up -d --build`. Les migrations de la base sont appliquées au
+  démarrage.
 - **Changer de port** si le port 80 est déjà utilisé : créez un fichier `.env` à la racine du dépôt
   contenant `MINIJIRA_PORT=8080`, relancez `docker compose up -d`, puis ouvrez http://localhost:8080.
 - **Sauvegarder les tickets** : `docker compose run --rm backup` (voir

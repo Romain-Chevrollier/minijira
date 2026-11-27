@@ -5,7 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Ticket, TicketStatus
+from app.models import Project, Ticket, TicketStatus
+from app.numbering import next_ticket_number
 from app.schemas import TicketCreate, TicketRead, TicketUpdate
 
 app = FastAPI(title="MiniJira")
@@ -16,12 +17,32 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+def find_project(db: Session, project_id: int | None) -> Project:
+    """Projet demandé, ou le plus ancien si aucun n'est précisé."""
+    if project_id is None:
+        query = select(Project).order_by(Project.created_at, Project.id).limit(1)
+        project = db.scalars(query).first()
+        detail = "Aucun projet : créez-en un avant d'ajouter un ticket"
+    else:
+        project = db.get(Project, project_id)
+        detail = f"Le projet {project_id} n'existe pas"
+    if project is None:
+        raise HTTPException(status_code=422, detail=detail)
+    return project
+
+
 @app.post("/tickets", status_code=201, response_model=TicketRead)
 def create_ticket(
     payload: TicketCreate, db: Annotated[Session, Depends(get_db)]
 ) -> Ticket:
-    # Le statut est fixé côté serveur : un ticket commence toujours en "todo"
-    ticket = Ticket(**payload.model_dump(), status=TicketStatus.TODO)
+    project = find_project(db, payload.project_id)
+    ticket = Ticket(
+        **payload.model_dump(exclude={"project_id"}),
+        project=project,
+        number=next_ticket_number(db, project.key),
+        # Le statut est fixé côté serveur : un ticket commence toujours en "todo"
+        status=TicketStatus.TODO,
+    )
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
@@ -62,6 +83,7 @@ def delete_ticket(ticket_id: int, db: Annotated[Session, Depends(get_db)]) -> No
     ticket = db.get(Ticket, ticket_id)
     if ticket is None:
         raise HTTPException(status_code=404, detail="Ticket introuvable")
-    # Suppression définitive : pas de corbeille ni de suppression logique
+    # Suppression définitive : pas de corbeille ni de suppression logique.
+    # Son numéro n'est jamais réattribué (voir app/numbering.py).
     db.delete(ticket)
     db.commit()

@@ -28,6 +28,8 @@ def blank_to_none(value: object) -> object:
 
 class TicketCreate(BaseModel):
     title: TicketTitle
+    # Projet du ticket ; sans projet, le plus ancien est utilisé
+    project_id: int | None = None
     description: str | None = None
     priority: TicketPriority = TicketPriority.MEDIUM
     assignee: TicketAssignee = None
@@ -68,10 +70,23 @@ class TicketUpdate(BaseModel):
         return self
 
 
-class TicketRead(BaseModel):
+class ProjectSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    key: str
+    name: str
+
+
+class TicketRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    # Identifiant interne, utilisé dans les adresses (/tickets/12)
+    id: int
+    # Numéro dans le projet et clé lisible : 12 et PERSO-12
+    number: int
+    key: str
+    project: ProjectSummary
     title: str
     description: str | None
     priority: TicketPriority
