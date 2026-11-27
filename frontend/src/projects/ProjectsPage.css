@@ -1,0 +1,143 @@
+.projects-header {
+  margin-bottom: 16px;
+}
+
+.projects-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.projects-header h2:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Formulaire de création : même cadre que « Nouveau ticket » */
+.ticket-form h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.project-key-field {
+  max-width: 260px;
+}
+
+.field-help {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.project-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.project-table th,
+.project-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-table th {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.project-name-cell {
+  width: 100%;
+}
+
+.project-name {
+  display: block;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* Raison pour laquelle le projet ne peut pas être supprimé */
+.project-blocked-reason {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.project-table .ticket-key {
+  padding-top: 12px;
+}
+
+.project-count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-actions-cell {
+  white-space: nowrap;
+}
+
+.project-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.project-delete-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--danger-text);
+  border-radius: 8px;
+  background: var(--danger-bg);
+  white-space: normal;
+}
+
+.project-delete-confirm p {
+  margin: 0;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.project-actions-cell .form-error {
+  margin-top: 8px;
+  white-space: normal;
+}
+
+.project-rename-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-rename-form input {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.project-rename-form input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.project-rename-form [aria-invalid='true'] {
+  border-color: var(--danger-text);
+}
+
+/* Bouton indisponible (aria-disabled) : il reste atteignable au clavier */
+.project-actions [aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Écran étroit : les boutons passent les uns sous les autres */
+@media (max-width: 640px) {
+  .project-actions {
+    flex-direction: column;
+  }
+}

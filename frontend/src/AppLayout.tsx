@@ -6,13 +6,14 @@ import { TicketCreateForm } from './tickets/TicketCreateForm'
 import './AppLayout.css'
 
 /**
- * Mise en page commune aux deux vues : titre, onglets Board / Liste et création d'un ticket.
- * La vue choisie (et sa popup éventuelle) s'affiche en dessous.
+ * Mise en page commune : titre, onglets Board / Liste / Projets et création d'un ticket.
+ * L'écran choisi (et sa popup éventuelle) s'affiche en dessous.
  */
 export function AppLayout() {
   const [isCreating, setIsCreating] = useState(false)
-  // /liste et /liste/tickets/12 : vue Liste ; tout le reste : vue Board
+  // /liste et /liste/tickets/12 : vue Liste ; /projets : Projets ; tout le reste : Board
   const isListView = useMatch('/liste/*') !== null
+  const isProjectsView = useMatch('/projets/*') !== null
 
   return (
     <main>
@@ -31,11 +32,14 @@ export function AppLayout() {
 
       {/* De vrais liens : chaque vue a son adresse (Précédent, nouvel onglet…) */}
       <nav className="view-tabs" aria-label="Vues">
-        <ViewTab to="/" isActive={!isListView}>
+        <ViewTab to="/" isActive={!isListView && !isProjectsView}>
           Board
         </ViewTab>
         <ViewTab to="/liste" isActive={isListView}>
           Liste
+        </ViewTab>
+        <ViewTab to="/projets" isActive={isProjectsView}>
+          Projets
         </ViewTab>
       </nav>
 
