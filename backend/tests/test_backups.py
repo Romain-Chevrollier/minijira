@@ -109,8 +109,10 @@ def test_restore_saves_current_state_first(make_database, tmp_path):
     safety = restore_backup(target, backup, yes, tmp_path)
 
     assert safety.name.endswith("-avant-restauration.dump")
-    # La sauvegarde de sécurité permet de revenir en arrière
-    restore_backup(target, safety, yes, tmp_path)
+    # La sauvegarde de sécurité permet de revenir en arrière. Ce retour crée à son
+    # tour une sauvegarde de sécurité, nommée à la seconde près : dans un autre
+    # dossier, son nom ne peut pas être déjà pris si tout tient dans la même seconde
+    restore_backup(target, safety, yes, tmp_path / "retour")
     assert [t["title"] for t in tickets(target)] == ["Actuel"]
 
 
