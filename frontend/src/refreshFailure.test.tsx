@@ -6,12 +6,14 @@ import type { NavigateFunction } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
 import type { Ticket } from './api/tickets'
+import { persoKey } from './test/fixtures'
 import App from './App'
 import { jsonResponse, renderWithQueryClient } from './test/render'
 import { mockServer } from './test/server'
 
 const ticket: Ticket = {
   id: 1,
+  ...persoKey(1),
   title: 'Mon ticket',
   description: null,
   priority: 'low',
@@ -19,7 +21,7 @@ const ticket: Ticket = {
   status: 'todo',
   created_at: '2026-11-02T12:00:00Z',
 }
-const otherTicket: Ticket = { ...ticket, id: 2, title: 'Autre ticket' }
+const otherTicket: Ticket = { ...ticket, id: 2, ...persoKey(2), title: 'Autre ticket' }
 
 const STALE = 'Données peut-être pas à jour.'
 const DELETED = "Ce ticket n'existe plus. Copie ton texte avant de fermer."

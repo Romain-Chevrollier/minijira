@@ -2,12 +2,14 @@ import { fireEvent, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
+import { persoKey } from '../test/fixtures'
 import { jsonResponse, renderWithQueryClient } from '../test/render'
 import { TicketList } from './TicketList'
 
 const tickets: Ticket[] = [
   {
     id: 2,
+    ...persoKey(2),
     title: 'Préparer la démo',
     description: null,
     priority: 'high',
@@ -17,6 +19,7 @@ const tickets: Ticket[] = [
   },
   {
     id: 1,
+    ...persoKey(1),
     title: 'Installer le projet',
     description: 'Cloner et lancer',
     priority: 'low',
@@ -38,7 +41,7 @@ afterEach(() => {
 })
 
 describe('TicketList', () => {
-  it("affiche les tickets dans l'ordre de l'API, avec des libellés lisibles", async () => {
+  it("affiche les tickets dans l'ordre de l'API, avec leur clé et des libellés lisibles", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(tickets))
 
     renderWithQueryClient(<TicketList />)
@@ -47,6 +50,9 @@ describe('TicketList', () => {
     const [, firstRow, secondRow] = within(table).getAllByRole('row')
 
     expect(fetchMock).toHaveBeenCalledWith('/api/tickets')
+    expect(within(table).getByRole('columnheader', { name: 'Clé' })).toBeInTheDocument()
+    expect(within(firstRow).getByRole('cell', { name: 'PERSO-2' })).toBeInTheDocument()
+    expect(within(secondRow).getByRole('cell', { name: 'PERSO-1' })).toBeInTheDocument()
     expect(within(firstRow).getByText('Préparer la démo')).toBeInTheDocument()
     expect(within(firstRow).getByText('En cours')).toBeInTheDocument()
     expect(within(firstRow).getByText('Haute')).toBeInTheDocument()

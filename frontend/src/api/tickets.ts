@@ -1,10 +1,21 @@
+import { ApiError, readJson } from './http'
+import type { ProjectSummary } from './projects'
+
+// Importé depuis ce fichier par le reste de l'application
+export { ApiError }
+
 // Types alignés sur les schémas du backend (backend/app/schemas.py)
 export type TicketStatus = 'todo' | 'in_progress' | 'done'
 export type TicketPriority = 'low' | 'medium' | 'high'
 
 /** Ticket renvoyé par l'API (TicketRead). */
 export interface Ticket {
+  /** Identifiant interne, utilisé dans les adresses (/tickets/12). */
   id: number
+  /** Numéro dans le projet et clé lisible : 12 et PERSO-12. */
+  number: number
+  key: string
+  project: ProjectSummary
   title: string
   description: string | null
   priority: TicketPriority
@@ -21,27 +32,13 @@ export interface TicketCreate {
   assignee: string | null
 }
 
+/** Création : les champs communs, plus le projet (422 s'il n'existe plus). */
+export interface TicketCreatePayload extends TicketCreate {
+  project_id: number
+}
+
 /** Champs à modifier (TicketUpdate) : seuls les champs présents sont changés. */
 export type TicketUpdate = Partial<TicketCreate & { status: TicketStatus }>
-
-/** Erreur renvoyée quand l'API répond avec un code d'échec (4xx, 5xx). */
-export class ApiError extends Error {
-  readonly status: number
-
-  constructor(status: number, message: string) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-  }
-}
-
-/** Lit la réponse JSON, ou lève une ApiError si l'API a répondu par un échec. */
-async function readJson<T>(response: Response, action: string): Promise<T> {
-  if (!response.ok) {
-    throw new ApiError(response.status, `Erreur ${response.status} ${action}`)
-  }
-  return (await response.json()) as T
-}
 
 /** Liste des tickets, du plus récent au plus ancien (tri fait par l'API). */
 export async function fetchTickets(): Promise<Ticket[]> {
@@ -56,7 +53,7 @@ export async function fetchTicket(id: number): Promise<Ticket> {
 }
 
 /** Crée un ticket et renvoie le ticket enregistré. */
-export async function createTicket(payload: TicketCreate): Promise<Ticket> {
+export async function createTicket(payload: TicketCreatePayload): Promise<Ticket> {
   const response = await fetch('/api/tickets', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

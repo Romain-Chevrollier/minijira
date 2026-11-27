@@ -32,6 +32,10 @@ body:has(.ticket-dialog[open]) {
   gap: 16px;
 }
 
+.ticket-dialog-header .ticket-key {
+  margin: 0 0 4px;
+}
+
 .ticket-dialog-header h2 {
   margin: 0;
   font-size: 1.3rem;

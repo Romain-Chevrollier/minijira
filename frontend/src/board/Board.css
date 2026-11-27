@@ -99,6 +99,11 @@
   outline-offset: 2px;
 }
 
+/* La clé, collée au titre en dessous */
+.ticket-card .ticket-key {
+  margin-bottom: -6px;
+}
+
 .ticket-card-title {
   font-weight: 500;
   overflow-wrap: anywhere;

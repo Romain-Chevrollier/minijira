@@ -3,12 +3,14 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
+import { persoKey } from '../test/fixtures'
 import App from '../App'
 import { jsonResponse, renderWithQueryClient } from '../test/render'
 import { mockServer } from '../test/server'
 
 const fullTicket: Ticket = {
   id: 2,
+  ...persoKey(2),
   title: 'Préparer la démo',
   description: 'Montrer la liste\net le formulaire',
   priority: 'high',
@@ -19,6 +21,7 @@ const fullTicket: Ticket = {
 
 const bareTicket: Ticket = {
   id: 1,
+  ...persoKey(1),
   title: 'Installer le projet',
   description: null,
   priority: 'low',
@@ -46,6 +49,9 @@ describe('Popup de détail', () => {
 
     const dialog = await openFromList(user, 'Préparer la démo')
 
+    expect(within(dialog).getByText('PERSO-2')).toBeInTheDocument()
+    expect(within(dialog).getByText('Projet')).toBeInTheDocument()
+    expect(within(dialog).getByText('Personnel')).toBeInTheDocument()
     expect(within(dialog).getByText('En cours')).toBeInTheDocument()
     expect(within(dialog).getByText('Haute')).toBeInTheDocument()
     expect(within(dialog).getByText('Élodie')).toBeInTheDocument()

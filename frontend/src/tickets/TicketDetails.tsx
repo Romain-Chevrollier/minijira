@@ -49,6 +49,8 @@ export function TicketDetails({ ticket, onEdit, onDeleted }: TicketDetailsProps)
       </div>
 
       <dl className="ticket-facts">
+        <dt>Projet</dt>
+        <dd>{ticket.project.name}</dd>
         <dt>Assigné</dt>
         <dd className={ticket.assignee ? undefined : 'empty'}>
           {ticket.assignee ?? 'Non assigné'}

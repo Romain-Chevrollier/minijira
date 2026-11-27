@@ -57,6 +57,7 @@ function TicketTable({ tickets }: { tickets: Ticket[] }) {
     <table className="ticket-list" aria-label="Tickets">
       <thead>
         <tr>
+          <th scope="col">Clé</th>
           <th scope="col">Titre</th>
           <th scope="col">Statut</th>
           <th scope="col">Priorité</th>
@@ -66,7 +67,8 @@ function TicketTable({ tickets }: { tickets: Ticket[] }) {
       <tbody>
         {tickets.map((ticket) => (
           <tr key={ticket.id}>
-            <td>
+            <td className="ticket-key">{ticket.key}</td>
+            <td className="ticket-list-title">
               {/* Adresse relative à la vue : /liste/tickets/12.
                   fromView : la popup saura revenir en arrière en se fermant */}
               <Link to={`tickets/${ticket.id}`} state={{ fromView: true }}>

@@ -108,8 +108,14 @@ export function useBoardSensors() {
   )
 }
 
+/** « PERSO-12 « Préparer la démo » » : la clé, puis le titre. */
+export function ticketLabel(ticket: Pick<Ticket, 'key' | 'title'>): string {
+  return `${ticket.key} « ${ticket.title} »`
+}
+
 function cardName(active: Pick<Active, 'data'>): string {
-  return `Carte « ${draggedTicket(active)?.title ?? ''} »`
+  const ticket = draggedTicket(active)
+  return `Carte ${ticket ? ticketLabel(ticket) : ''}`
 }
 
 function columnName(id: UniqueIdentifier | undefined): string {

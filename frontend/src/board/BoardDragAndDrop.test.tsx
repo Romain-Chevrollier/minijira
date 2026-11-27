@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
+import { persoKey } from '../test/fixtures'
 import App from '../App'
 import { jsonResponse, renderWithQueryClient } from '../test/render'
 import { mockServer } from '../test/server'
@@ -12,6 +13,7 @@ import { BOARD_STATUSES } from './boardColumns'
 const tickets: Ticket[] = [
   {
     id: 1,
+    ...persoKey(1),
     title: 'Installer le projet',
     description: null,
     priority: 'low',
@@ -21,6 +23,7 @@ const tickets: Ticket[] = [
   },
   {
     id: 2,
+    ...persoKey(2),
     title: 'Écrire la doc',
     description: null,
     priority: 'medium',
@@ -155,7 +158,7 @@ describe('Glisser-déposer au clavier', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(
-      'Impossible de déplacer « Installer le projet ». La carte a été remise à sa place.',
+      'Impossible de déplacer PERSO-1 « Installer le projet ». La carte a été remise à sa place.',
     )
     expect(cardTitles('À faire')).toEqual(['Installer le projet'])
     expect(cardTitles('En cours')).toEqual(['Écrire la doc'])
@@ -176,7 +179,7 @@ describe('Glisser-déposer au clavier', () => {
     await dragWithKeyboard(user, 'Installer le projet', '[ArrowRight]')
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Impossible de déplacer « Installer le projet ».',
+      'Impossible de déplacer PERSO-1 « Installer le projet ».',
     )
     await waitFor(() => expect(server.urlsCalled('GET')).toHaveLength(2))
     expect(cardTitles('À faire')).toEqual(['Installer le projet'])

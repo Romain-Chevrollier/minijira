@@ -2,10 +2,12 @@ import type { ClientRect } from '@dnd-kit/core'
 import { describe, expect, it } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
+import { persoKey } from '../test/fixtures'
 import { ANNOUNCEMENTS, columnCoordinates, getMove, KEYBOARD_CODES } from './dragAndDrop'
 
 const ticket: Ticket = {
   id: 1,
+  ...persoKey(1),
   title: 'Installer le projet',
   description: null,
   priority: 'low',
@@ -95,22 +97,22 @@ describe('columnCoordinates (flèches du clavier)', () => {
 describe('ANNOUNCEMENTS (lecteurs d’écran)', () => {
   it('annonce la prise, le survol et le dépôt en français', () => {
     expect(ANNOUNCEMENTS.onDragStart({ active } as never)).toBe(
-      'Carte « Installer le projet » saisie, dans la colonne À faire.',
+      'Carte PERSO-1 « Installer le projet » saisie, dans la colonne À faire.',
     )
     expect(ANNOUNCEMENTS.onDragOver({ active, over: { id: 'done' } } as never)).toBe(
-      'Carte « Installer le projet » au-dessus de la colonne Terminé.',
+      'Carte PERSO-1 « Installer le projet » au-dessus de la colonne Terminé.',
     )
     expect(ANNOUNCEMENTS.onDragEnd({ active, over: { id: 'in_progress' } } as never)).toBe(
-      'Carte « Installer le projet » déposée dans En cours.',
+      'Carte PERSO-1 « Installer le projet » déposée dans En cours.',
     )
   })
 
   it('annonce quand la carte reste à sa place', () => {
     expect(ANNOUNCEMENTS.onDragEnd({ active, over: { id: 'todo' } } as never)).toBe(
-      'Carte « Installer le projet » reposée à sa place, sans changement.',
+      'Carte PERSO-1 « Installer le projet » reposée à sa place, sans changement.',
     )
     expect(ANNOUNCEMENTS.onDragCancel({ active, over: null } as never)).toBe(
-      'Déplacement annulé. Carte « Installer le projet » reste à sa place.',
+      'Déplacement annulé. Carte PERSO-1 « Installer le projet » reste à sa place.',
     )
   })
 })

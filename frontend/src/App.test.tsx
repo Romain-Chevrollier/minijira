@@ -1,14 +1,16 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import type { Ticket } from './api/tickets'
+import { persoKey } from './test/fixtures'
 import App from './App'
 import { renderWithQueryClient } from './test/render'
 import { mockServer } from './test/server'
 
 const ticket: Ticket = {
   id: 1,
+  ...persoKey(1),
   title: 'Installer le projet',
   description: null,
   priority: 'low',
@@ -162,6 +164,23 @@ describe('Création', () => {
     await screen.findByRole('button', { name: 'Nouveau ticket' })
     expect(server.bodiesSent('POST')).toHaveLength(1)
     expectBoardView()
+  })
+
+  it('un ticket créé dans un autre projet porte la clé de ce projet sur le board', async () => {
+    const user = userEvent.setup()
+    mockServer()
+    renderWithQueryClient(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Nouveau ticket' }))
+    const form = screen.getByRole('form', { name: 'Nouveau ticket' })
+    const projectField = within(form).getByLabelText(/Projet/)
+    await waitFor(() => expect(projectField).toBeEnabled())
+    await user.selectOptions(projectField, 'Maison (MAISON)')
+    await user.type(within(form).getByLabelText(/Titre/), 'Tondre la pelouse')
+    await user.click(within(form).getByRole('button', { name: 'Créer' }))
+
+    const card = await screen.findByRole('link', { name: /Tondre la pelouse/ })
+    expect(card).toHaveTextContent(/^MAISON-1Tondre la pelouse/)
   })
 
   it('Annuler referme le formulaire', async () => {

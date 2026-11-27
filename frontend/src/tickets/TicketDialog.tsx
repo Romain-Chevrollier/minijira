@@ -141,7 +141,10 @@ export function TicketDialog() {
     >
       <div className="ticket-dialog-content">
         <header className="ticket-dialog-header">
-          <h2 id={titleId}>{heading}</h2>
+          <div>
+            {query.data && <p className="ticket-key">{query.data.key}</p>}
+            <h2 id={titleId}>{heading}</h2>
+          </div>
           <button
             type="button"
             className="icon-button"
