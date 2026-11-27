@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
+import { persoKey } from '../test/fixtures'
 import {
   EMPTY_TICKET_FORM,
   ticketToEditValues,
@@ -11,6 +12,7 @@ import {
 
 const ticket: Ticket = {
   id: 3,
+  ...persoKey(3),
   title: 'Préparer la démo',
   description: null,
   priority: 'medium',

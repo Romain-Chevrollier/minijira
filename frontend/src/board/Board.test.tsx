@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
+import { persoKey } from '../test/fixtures'
 import App from '../App'
 import { jsonResponse, renderWithQueryClient } from '../test/render'
 import { mockServer } from '../test/server'
@@ -10,6 +11,7 @@ import { mockServer } from '../test/server'
 const tickets: Ticket[] = [
   {
     id: 1,
+    ...persoKey(1),
     title: 'Installer le projet',
     description: null,
     priority: 'low',
@@ -19,6 +21,7 @@ const tickets: Ticket[] = [
   },
   {
     id: 2,
+    ...persoKey(2),
     title: 'Préparer la démo',
     description: null,
     priority: 'high',
@@ -28,6 +31,7 @@ const tickets: Ticket[] = [
   },
   {
     id: 3,
+    ...persoKey(3),
     title: 'Écrire la doc',
     description: null,
     priority: 'medium',
@@ -89,7 +93,7 @@ describe('Board', () => {
     expect(within(column('À faire')).queryByText('Aucun ticket')).not.toBeInTheDocument()
   })
 
-  it("une carte affiche le titre, la priorité et l'assigné s'il y en a un", async () => {
+  it("une carte affiche la clé, le titre, la priorité et l'assigné s'il y en a un", async () => {
     await setup()
 
     const withAssignee = screen.getByRole('link', { name: /Préparer la démo/ })
@@ -97,7 +101,7 @@ describe('Board', () => {
     expect(within(withAssignee).getByText('Élodie')).toBeInTheDocument()
 
     const withoutAssignee = screen.getByRole('link', { name: /Installer le projet/ })
-    expect(withoutAssignee).toHaveTextContent(/^Installer le projetBasse$/)
+    expect(withoutAssignee).toHaveTextContent(/^PERSO-1Installer le projetBasse$/)
   })
 
   it('un clic sur une carte ouvre sa popup par-dessus le board', async () => {

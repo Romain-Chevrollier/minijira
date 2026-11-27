@@ -47,6 +47,7 @@ export function TicketCardPreview({ ticket }: { ticket: Ticket }) {
 function TicketCardContent({ ticket }: { ticket: Ticket }) {
   return (
     <>
+      <span className="ticket-key">{ticket.key}</span>
       <span className="ticket-card-title">{ticket.title}</span>
       <span className="ticket-card-meta">
         {/* La couleur accompagne le libellé, elle ne le remplace pas */}

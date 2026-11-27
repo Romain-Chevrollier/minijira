@@ -1,25 +1,40 @@
 import { vi } from 'vitest'
 
-import type { Ticket, TicketCreate, TicketUpdate } from '../api/tickets'
+import type { Project } from '../api/projects'
+import type { Ticket, TicketCreatePayload, TicketUpdate } from '../api/tickets'
+import { PROJECTS } from './fixtures'
 import { jsonResponse } from './render'
 
 /**
  * Faux serveur pour les tests : remplace fetch et garde les tickets en mémoire.
- * Répond à GET/POST /api/tickets et GET/PATCH/DELETE /api/tickets/:id, comme l'API.
+ * Répond à GET /api/projects, GET/POST /api/tickets et GET/PATCH/DELETE
+ * /api/tickets/:id, comme l'API.
  */
-export function mockServer(initialTickets: Ticket[] = []) {
+export function mockServer(initialTickets: Ticket[] = [], projects: Project[] = PROJECTS) {
   let tickets = initialTickets.map((ticket) => ({ ...ticket }))
 
   const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
     const url = String(input)
     const method = init?.method ?? 'GET'
 
+    if (url === '/api/projects') {
+      return jsonResponse(projects)
+    }
+
     if (url === '/api/tickets') {
       if (method === 'POST') {
-        const payload = JSON.parse(String(init?.body)) as TicketCreate
+        const { project_id, ...payload } = JSON.parse(String(init?.body)) as TicketCreatePayload
+        const project = projects.find((p) => p.id === project_id)
+        if (!project) {
+          return jsonResponse({ detail: `Le projet ${project_id} n'existe pas` }, 422)
+        }
+        const number = tickets.filter((t) => t.project.id === project.id).length + 1
         const ticket: Ticket = {
           ...payload,
           id: Math.max(0, ...tickets.map((t) => t.id)) + 1,
+          number,
+          key: `${project.key}-${number}`,
+          project: { id: project.id, key: project.key, name: project.name },
           status: 'todo',
           created_at: '2026-11-19T12:00:00Z',
         }

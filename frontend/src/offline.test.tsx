@@ -4,12 +4,14 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import type { Ticket } from './api/tickets'
+import { persoKey } from './test/fixtures'
 import App from './App'
 import { renderWithQueryClient } from './test/render'
 import { mockServer } from './test/server'
 
 const ticket: Ticket = {
   id: 1,
+  ...persoKey(1),
   title: 'Mon ticket',
   description: null,
   priority: 'low',

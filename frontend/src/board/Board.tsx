@@ -13,6 +13,7 @@ import {
   ANNOUNCEMENTS,
   getMove,
   SCREEN_READER_INSTRUCTIONS,
+  ticketLabel,
   useBoardSensors,
 } from './dragAndDrop'
 import type { CardData } from './dragAndDrop'
@@ -49,7 +50,7 @@ export function Board() {
     moveTicket.mutate(move, {
       onError: () =>
         setMoveError(
-          `Impossible de déplacer « ${move.ticket.title} ». La carte a été remise à sa place.`,
+          `Impossible de déplacer ${ticketLabel(move.ticket)}. La carte a été remise à sa place.`,
         ),
     })
   }

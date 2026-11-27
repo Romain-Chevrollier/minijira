@@ -12,3 +12,15 @@
   margin: 0;
   font-size: 1.15rem;
 }
+
+/* Le projet n'a pas besoin de toute la largeur */
+.project-field {
+  max-width: 320px;
+}
+
+.project-field-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}

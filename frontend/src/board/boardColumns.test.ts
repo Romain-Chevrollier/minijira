@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
+import { persoKey } from '../test/fixtures'
 import { groupByStatus } from './boardColumns'
 
 function makeTicket(overrides: Partial<Ticket> & Pick<Ticket, 'id'>): Ticket {
   return {
+    ...persoKey(overrides.id),
     title: `Ticket ${overrides.id}`,
     description: null,
     priority: 'medium',
