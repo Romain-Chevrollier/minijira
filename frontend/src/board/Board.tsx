@@ -5,8 +5,10 @@ import { useId, useState } from 'react'
 
 import { fetchTickets } from '../api/tickets'
 import type { Ticket, TicketStatus } from '../api/tickets'
+import { filterByProject, useProjectFilter } from '../projects/useProjectFilter'
 import { StaleDataNotice } from '../query/StaleDataNotice'
 import { useRefreshFailed } from '../query/useRefreshFailed'
+import { EmptyProjectMessage } from '../projects/EmptyProjectMessage'
 import { STATUS_LABELS } from '../tickets/labels'
 import { BOARD_STATUSES, groupByStatus } from './boardColumns'
 import {
@@ -32,6 +34,7 @@ export function Board() {
     refetch,
   } = useQuery({ queryKey: ['tickets'], queryFn: fetchTickets })
   const { failed } = useRefreshFailed(['tickets'])
+  const { projectKey, projectName } = useProjectFilter()
   const sensors = useBoardSensors()
   const moveTicket = useMoveTicket()
   const [draggedTicket, setDraggedTicket] = useState<Ticket | null>(null)
@@ -77,11 +80,16 @@ export function Board() {
     )
   }
 
-  const columns = groupByStatus(tickets)
+  // Filtre appliqué à la donnée complète : un déplacement reste visible tout de suite
+  const visibleTickets = filterByProject(tickets, projectKey)
+  const columns = groupByStatus(visibleTickets)
 
   return (
     <>
       <StaleDataNotice isStale={failed} isRetrying={isFetching} onRetry={() => void refetch()} />
+      {projectKey && visibleTickets.length === 0 && (
+        <EmptyProjectMessage name={projectName ?? projectKey} />
+      )}
       {moveError && (
         <div role="alert" className="board-error board-move-error">
           <p>{moveError}</p>

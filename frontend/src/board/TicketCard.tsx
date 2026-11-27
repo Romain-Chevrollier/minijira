@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 
 import type { Ticket } from '../api/tickets'
 import { PRIORITY_LABELS } from '../tickets/labels'
@@ -18,16 +18,18 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
   })
   // La carte reste un lien (et non un bouton, le rôle proposé par dnd-kit)
   const { role: _role, ...dragAttributes } = attributes
+  // ?projet=… : le filtre reste actif dans la popup et après sa fermeture
+  const { search } = useLocation()
 
   return (
-    // Adresse relative au board : /tickets/12.
+    // Adresse relative au board, filtre compris : /tickets/12?projet=MAISON.
     // fromView : la popup saura revenir en arrière en se fermant
     <Link
       ref={setNodeRef}
       {...dragAttributes}
       {...listeners}
       className={isDragging ? 'ticket-card ticket-card-dragging' : 'ticket-card'}
-      to={`tickets/${ticket.id}`}
+      to={{ pathname: `tickets/${ticket.id}`, search }}
       state={{ fromView: true }}
     >
       <TicketCardContent ticket={ticket} />

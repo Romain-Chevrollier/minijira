@@ -52,11 +52,12 @@ export function TicketDialog() {
   function close() {
     // Ouverte depuis une vue : on revient en arrière, comme le bouton « Précédent ».
     // Ouverte directement par son adresse : on remonte d'un niveau, vers la vue
-    // derrière la popup (/tickets/12 -> /, /liste/tickets/12 -> /liste).
+    // derrière la popup (/tickets/12 -> /, /liste/tickets/12 -> /liste), en gardant
+    // le filtre (/tickets/12?projet=MAISON -> /?projet=MAISON).
     if ((location.state as { fromView?: boolean } | null)?.fromView) {
       navigate(-1)
     } else {
-      navigate('..', { relative: 'route', replace: true })
+      navigate({ pathname: '..', search: location.search }, { relative: 'route', replace: true })
     }
   }
 

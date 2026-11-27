@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
-import { persoKey } from '../test/fixtures'
+import { persoKey, PROJECTS } from '../test/fixtures'
 import App from '../App'
 import { jsonResponse, renderWithQueryClient } from '../test/render'
 import { mockServer } from '../test/server'
@@ -181,11 +181,16 @@ describe('Board : chargement et erreur', () => {
 
   it('affiche une erreur, et « Réessayer » recharge les tickets', async () => {
     const user = userEvent.setup()
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(jsonResponse({ detail: 'Erreur' }, 500))
-      .mockResolvedValueOnce(jsonResponse(tickets))
-    vi.stubGlobal('fetch', fetchMock)
+    // Les projets (menu du filtre) répondent ; les tickets échouent une fois, puis répondent
+    let ticketLoads = 0
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(async (input) => {
+        if (String(input) === '/api/projects') return jsonResponse(PROJECTS)
+        ticketLoads += 1
+        return ticketLoads === 1 ? jsonResponse({ detail: 'Erreur' }, 500) : jsonResponse(tickets)
+      }),
+    )
     renderWithQueryClient(<App />)
 
     const alert = await screen.findByRole('alert')
@@ -194,6 +199,6 @@ describe('Board : chargement et erreur', () => {
     await user.click(within(alert).getByRole('button', { name: 'Réessayer' }))
 
     expect(await screen.findByRole('region', { name: 'À faire' })).toBeInTheDocument()
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(ticketLoads).toBe(2)
   })
 })
