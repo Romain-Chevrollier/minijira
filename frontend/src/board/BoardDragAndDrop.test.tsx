@@ -132,7 +132,7 @@ describe('Glisser-déposer au clavier', () => {
     await waitFor(() => expect(cardTitles('Terminé')).toEqual(['Installer le projet']))
     expect(server.bodiesSent('PATCH')).toEqual([{ status: 'done' }])
     // Entrée a lâché la carte sans ouvrir la popup
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('la carte change de colonne avant la réponse de l’API', async () => {

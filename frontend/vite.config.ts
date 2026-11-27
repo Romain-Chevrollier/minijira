@@ -18,5 +18,8 @@ export default defineConfig({
     // jsdom simule un navigateur pour que les tests tournent sans en ouvrir un
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // 15 s par test (5 s par défaut) : plus que les 5 s d'attente de findBy (setup.ts),
+    // pour qu'un vrai échec affiche l'élément introuvable plutôt qu'un simple dépassement
+    testTimeout: 15_000,
   },
 })

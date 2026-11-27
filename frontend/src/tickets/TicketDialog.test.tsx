@@ -76,7 +76,7 @@ describe('Popup de détail', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(screen.getByRole('table', { name: 'Tickets' })).toBeInTheDocument()
   })
 
@@ -86,7 +86,7 @@ describe('Popup de détail', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(await screen.findByRole('table', { name: 'Tickets' })).toBeInTheDocument()
   })
 
@@ -97,7 +97,7 @@ describe('Popup de détail', () => {
     // Le navigateur envoie l'événement « cancel » quand on appuie sur Échap
     fireEvent(dialog, new Event('cancel', { cancelable: true }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('se ferme avec un clic à côté, mais pas avec un clic dans son contenu', async () => {
@@ -109,7 +109,7 @@ describe('Popup de détail', () => {
 
     // Un clic sur le fond assombri atteint l'élément <dialog> lui-même
     await user.click(dialog)
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('affiche « Ticket introuvable » pour un ticket qui n’existe pas', async () => {

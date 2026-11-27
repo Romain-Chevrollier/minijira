@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -120,7 +120,7 @@ describe('Fermer la popup pendant une modification', () => {
 
     await user.click(screen.getByRole('button', { name: 'Abandonner' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(path(router)).toBe('/liste')
     expect(server.urlsCalled('PATCH')).toEqual([])
   })
@@ -131,7 +131,7 @@ describe('Fermer la popup pendant une modification', () => {
 
     await user.click(screen.getByRole('button', { name: 'Abandonner' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(path(router)).toBe('/liste')
   })
 
@@ -153,7 +153,7 @@ describe('Fermer la popup sans saisie à perdre', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(path(router)).toBe('/liste')
   })
 
@@ -164,7 +164,7 @@ describe('Fermer la popup sans saisie à perdre', () => {
 
     await user.keyboard('{Escape}')
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(path(router)).toBe('/liste')
   })
 
@@ -175,7 +175,7 @@ describe('Fermer la popup sans saisie à perdre', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(path(router)).toBe('/liste')
   })
 

@@ -122,7 +122,7 @@ describe('Board', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Écrire la doc' })
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(column('En cours')).toBeInTheDocument()
   })
 

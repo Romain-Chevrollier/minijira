@@ -97,7 +97,7 @@ describe('Popup selon la vue', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expectBoardView()
   })
 
@@ -112,7 +112,7 @@ describe('Popup selon la vue', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     await expectListView()
   })
 
@@ -126,7 +126,7 @@ describe('Popup selon la vue', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     await expectListView()
   })
 })
