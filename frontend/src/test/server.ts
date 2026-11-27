@@ -6,19 +6,74 @@ import { PROJECTS } from './fixtures'
 import { jsonResponse } from './render'
 
 /**
- * Faux serveur pour les tests : remplace fetch et garde les tickets en mémoire.
- * Répond à GET /api/projects, GET/POST /api/tickets et GET/PATCH/DELETE
- * /api/tickets/:id, comme l'API.
+ * Faux serveur pour les tests : remplace fetch et garde projets et tickets en mémoire.
+ * Répond comme l'API, avec les mêmes refus, à GET/POST /api/projects,
+ * PATCH/DELETE /api/projects/:id, GET/POST /api/tickets et GET/PATCH/DELETE
+ * /api/tickets/:id.
  */
-export function mockServer(initialTickets: Ticket[] = [], projects: Project[] = PROJECTS) {
+export function mockServer(initialTickets: Ticket[] = [], initialProjects: Project[] = PROJECTS) {
   let tickets = initialTickets.map((ticket) => ({ ...ticket }))
+  let projects = initialProjects.map((project) => ({ ...project }))
+
+  /** Projets avec leur nombre de tickets du moment, comme GET /api/projects. */
+  const projectsWithCounts = () =>
+    projects.map((project) => ({
+      ...project,
+      ticket_count: tickets.filter((t) => t.project.id === project.id).length,
+    }))
 
   const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
     const url = String(input)
     const method = init?.method ?? 'GET'
 
     if (url === '/api/projects') {
-      return jsonResponse(projects)
+      if (method === 'POST') {
+        const { name, key } = JSON.parse(String(init?.body)) as { name: string; key: string }
+        if (projects.some((p) => p.key === key)) {
+          return jsonResponse(
+            { detail: `La clé ${key} est déjà utilisée par un autre projet` },
+            409,
+          )
+        }
+        const project: Project = {
+          id: Math.max(0, ...projects.map((p) => p.id)) + 1,
+          name,
+          key,
+          created_at: '2026-11-20T12:00:00Z',
+          ticket_count: 0,
+        }
+        projects = [...projects, project]
+        return jsonResponse(project, 201)
+      }
+      return jsonResponse(projectsWithCounts())
+    }
+
+    const projectMatch = /^\/api\/projects\/(\d+)$/.exec(url)
+    if (projectMatch) {
+      const project = projectsWithCounts().find((p) => p.id === Number(projectMatch[1]))
+      if (!project) {
+        return jsonResponse({ detail: 'Projet introuvable' }, 404)
+      }
+      if (method === 'DELETE') {
+        if (project.ticket_count > 0) {
+          return jsonResponse(
+            { detail: `Le projet ${project.key} contient ${project.ticket_count} tickets` },
+            409,
+          )
+        }
+        if (projects.length === 1) {
+          return jsonResponse({ detail: 'Impossible de supprimer le dernier projet' }, 409)
+        }
+        projects = projects.filter((p) => p.id !== project.id)
+        return new Response(null, { status: 204 })
+      }
+      // PATCH : seul le nom change, y compris dans les tickets du projet
+      const { name } = JSON.parse(String(init?.body)) as { name: string }
+      projects = projects.map((p) => (p.id === project.id ? { ...p, name } : p))
+      tickets = tickets.map((t) =>
+        t.project.id === project.id ? { ...t, project: { ...t.project, name } } : t,
+      )
+      return jsonResponse({ ...project, name })
     }
 
     if (url === '/api/tickets') {
