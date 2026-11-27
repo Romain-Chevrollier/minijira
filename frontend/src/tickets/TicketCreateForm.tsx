@@ -17,11 +17,17 @@ import type { TicketFormErrors, TicketFormValues } from './ticketForm'
 import './TicketCreateForm.css'
 
 interface TicketCreateFormProps {
+  /** Projet proposé (celui du filtre) ; sinon le plus ancien. */
+  preferredProjectKey?: string | null
   onCreated: () => void
   onCancel: () => void
 }
 
-export function TicketCreateForm({ onCreated, onCancel }: TicketCreateFormProps) {
+export function TicketCreateForm({
+  preferredProjectKey = null,
+  onCreated,
+  onCancel,
+}: TicketCreateFormProps) {
   const [values, setValues] = useState<TicketFormValues>(EMPTY_TICKET_FORM)
   const [errors, setErrors] = useState<TicketFormErrors>({})
   // Projet choisi par l'utilisateur ; null tant qu'il garde celui proposé
@@ -31,8 +37,11 @@ export function TicketCreateForm({ onCreated, onCancel }: TicketCreateFormProps)
 
   const projectsQuery = useQuery({ queryKey: ['projects'], queryFn: fetchProjects })
   const projects = projectsQuery.data
-  // L'API renvoie les projets du plus ancien au plus récent : le premier est proposé
-  const projectId = chosenProjectId ?? projects?.[0]?.id ?? null
+  // Projet proposé : celui du filtre, sinon le plus ancien (l'API renvoie les projets
+  // du plus ancien au plus récent). Un choix fait à la main reste prioritaire.
+  const proposedProject =
+    projects?.find((p) => p.key === preferredProjectKey) ?? projects?.[0]
+  const projectId = chosenProjectId ?? proposedProject?.id ?? null
   const project = projects?.find((p) => p.id === projectId)
   // Projet choisi, puis supprimé entre-temps : il n'est plus dans la liste rechargée
   const isProjectGone = chosenProjectId !== null && projects !== undefined && !project

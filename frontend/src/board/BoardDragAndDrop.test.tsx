@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Ticket } from '../api/tickets'
-import { persoKey } from '../test/fixtures'
+import { maisonKey, persoKey } from '../test/fixtures'
 import App from '../App'
 import { jsonResponse, renderWithQueryClient } from '../test/render'
 import { mockServer } from '../test/server'
@@ -150,6 +150,22 @@ describe('Glisser-déposer au clavier', () => {
     await waitFor(() => expect(server.urlsCalled('GET')).toContain('/api/tickets'))
   })
 
+  it('fonctionne avec un filtre par projet actif', async () => {
+    const user = userEvent.setup()
+    const maisonTicket: Ticket = { ...tickets[0], id: 3, ...maisonKey(1), title: 'Tondre' }
+    const server = mockServer([...tickets, maisonTicket])
+    renderWithQueryClient(<App />, { route: '/?projet=PERSO' })
+    await screen.findByRole('region', { name: 'À faire' })
+    expect(cardTitles('À faire')).toEqual(['Installer le projet'])
+
+    await dragWithKeyboard(user, 'Installer le projet', '[ArrowRight]')
+
+    await waitFor(() => expect(cardTitles('En cours')).toContain('Installer le projet'))
+    expect(cardTitles('À faire')).toEqual([])
+    expect(server.bodiesSent('PATCH')).toEqual([{ status: 'in_progress' }])
+    expect(screen.queryByText('Tondre')).not.toBeInTheDocument()
+  })
+
   it("si l'API échoue, la carte revient dans sa colonne et un message l'indique", async () => {
     const { user, server } = await setup()
     onPatch(server, async () => jsonResponse({ detail: 'Erreur' }, 500))
@@ -181,7 +197,10 @@ describe('Glisser-déposer au clavier', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Impossible de déplacer PERSO-1 « Installer le projet ».',
     )
-    await waitFor(() => expect(server.urlsCalled('GET')).toHaveLength(2))
+    // Chargement initial, puis rechargement après l'échec (sans compter les projets)
+    await waitFor(() =>
+      expect(server.urlsCalled('GET').filter((url) => url === '/api/tickets')).toHaveLength(2),
+    )
     expect(cardTitles('À faire')).toEqual(['Installer le projet'])
     expect(cardTitles('En cours')).toEqual(['Écrire la doc'])
   })
